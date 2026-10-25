@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'welcome_screen.dart';
 import 'fashion_try_on.dart';
-import 'complete_the_look.dart';
 
 class FourteenthScreen extends StatefulWidget {
   const FourteenthScreen({super.key});
@@ -11,13 +10,17 @@ class FourteenthScreen extends StatefulWidget {
 }
 
 class _FourteenthScreenState extends State<FourteenthScreen> {
-  String _selectedPromptTag = 'Dinner tonight';
+  bool _isOutfitSaved = false;
 
   final TextEditingController _chatController = TextEditingController();
   final TextEditingController _occasionController =
       TextEditingController(text: 'Dinner');
   final TextEditingController _budgetController =
       TextEditingController(text: 'Under ₹10,000');
+  final TextEditingController _aestheticController =
+      TextEditingController(text: 'Formal');
+  final TextEditingController _itemNeededController =
+      TextEditingController(text: 'Suit');
 
   static const String _outfitImageUrl =
       'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=500&q=80';
@@ -27,6 +30,8 @@ class _FourteenthScreenState extends State<FourteenthScreen> {
     _chatController.dispose();
     _occasionController.dispose();
     _budgetController.dispose();
+    _aestheticController.dispose();
+    _itemNeededController.dispose();
     super.dispose();
   }
 
@@ -104,100 +109,6 @@ class _FourteenthScreenState extends State<FourteenthScreen> {
                   ],
                 ),
 
-                const SizedBox(height: 6),
-
-                // Subtitle
-                const Text(
-                  'Demo conversation · illustrative styling suggestions',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF888077),
-                  ),
-                ),
-
-                const SizedBox(height: 16),
-
-                // Active Filter Pills
-                Row(
-                  children: [
-                    _buildPillTag('Dinner'),
-                    const SizedBox(width: 10),
-                    _buildPillTag('Under ₹10,000'),
-                  ],
-                ),
-
-                const SizedBox(height: 20),
-
-                // User Message Box ("YOU")
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'YOU',
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 1.0,
-                        color: Color(0xFF888077),
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(14.0),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE2DDD3),
-                        borderRadius: BorderRadius.circular(4.0),
-                      ),
-                      child: const Text(
-                        'I need an elegant dinner look that feels modern and minimal.',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w400,
-                          color: Color(0xFF201D19),
-                          height: 1.35,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 18),
-
-                // AI Assistant Response Box ("EVOQE STYLIST")
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'EVOQE STYLIST',
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 1.0,
-                        color: Color(0xFF888077),
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(14.0),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFFFFFF),
-                        borderRadius: BorderRadius.circular(4.0),
-                      ),
-                      child: const Text(
-                        'Let\'s explore a tailored silhouette, understated jewelry, and a warm neutral palette.',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w400,
-                          color: Color(0xFF201D19),
-                          height: 1.35,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-
                 const SizedBox(height: 20),
 
                 // Stylist Recommendation Outfit Card
@@ -249,14 +160,36 @@ class _FourteenthScreenState extends State<FourteenthScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              'The considered evening',
-                              style: TextStyle(
-                                fontFamily: 'serif',
-                                fontSize: 19,
-                                fontWeight: FontWeight.w400,
-                                color: Color(0xFF201D19),
-                              ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Expanded(
+                                  child: Text(
+                                    'The formal dinner',
+                                    style: TextStyle(
+                                      fontFamily: 'serif',
+                                      fontSize: 19,
+                                      fontWeight: FontWeight.w400,
+                                      color: Color(0xFF201D19),
+                                    ),
+                                  ),
+                                ),
+                                GestureDetector(
+                                  onTap: () {
+                                    setState(() {
+                                      _isOutfitSaved = !_isOutfitSaved;
+                                    });
+                                  },
+                                  child: Icon(
+                                    _isOutfitSaved
+                                        ? Icons.bookmark_rounded
+                                        : Icons.bookmark_border_rounded,
+                                    size: 18,
+                                    color: const Color(0xFF201D19),
+                                  ),
+                                ),
+                              ],
                             ),
                             const SizedBox(height: 4),
                             const Text(
@@ -278,11 +211,33 @@ class _FourteenthScreenState extends State<FourteenthScreen> {
                             ),
                             const SizedBox(height: 8),
                             GestureDetector(
+                              onTap: () {},
+                              child: const Row(
+                                children: [
+                                  Icon(
+                                    Icons.refresh_rounded,
+                                    size: 12,
+                                    color: Color(0xFF5A544D),
+                                  ),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    'Regenerate new look',
+                                    style: TextStyle(
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.w500,
+                                      color: Color(0xFF5A544D),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            GestureDetector(
                               onTap: () {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => const TwelfthScreen(),
+                                    builder: (context) => const NinthScreen(),
                                   ),
                                 );
                               },
@@ -291,9 +246,9 @@ class _FourteenthScreenState extends State<FourteenthScreen> {
                                 children: [
                                   Flexible(
                                     child: Text(
-                                      'Explore the coordinated edit',
+                                      'Try on the coordinated edit',
                                       style: TextStyle(
-                                        fontSize: 11,
+                                        fontSize: 11.5,
                                         fontWeight: FontWeight.w500,
                                         color: Color(0xFF5A544D),
                                       ),
@@ -316,78 +271,212 @@ class _FourteenthScreenState extends State<FourteenthScreen> {
                   ),
                 ),
 
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
 
-                // Controls Bar: Regenerate | Refine | Try On ↗
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    GestureDetector(
-                      onTap: () {},
-                      child: const Row(
-                        children: [
-                          Icon(
-                            Icons.refresh_rounded,
-                            size: 14,
-                            color: Color(0xFF201D19),
-                          ),
-                          SizedBox(width: 4),
-                          Text(
-                            'Regenerate',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: Color(0xFF201D19),
-                            ),
-                          ),
-                        ],
+                // Refresh Button Row outside card
+                GestureDetector(
+                  onTap: () {},
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.refresh_rounded,
+                        size: 16,
+                        color: Color(0xFF201D19),
                       ),
-                    ),
-                    GestureDetector(
-                      onTap: () {},
-                      child: const Text(
-                        'Refine',
+                      SizedBox(width: 6),
+                      Text(
+                        'Refresh',
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: 13,
                           fontWeight: FontWeight.w500,
                           color: Color(0xFF201D19),
                         ),
                       ),
-                    ),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const NinthScreen(),
-                          ),
-                        );
-                      },
-                      child: const Row(
-                        children: [
-                          Text(
-                            'Try On',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: Color(0xFF201D19),
-                            ),
-                          ),
-                          SizedBox(width: 2),
-                          Icon(
-                            Icons.north_east_rounded,
-                            size: 11,
-                            color: Color(0xFF201D19),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
 
-                const SizedBox(height: 20),
+                const SizedBox(height: 24),
 
-                // Chat Input Box Field
+                // Occasion Shortcut Input Field
+                const Text(
+                  'Occasion',
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF6E6760),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                TextField(
+                  controller: _occasionController,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Color(0xFF201D19),
+                  ),
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: const Color(0xFFEFECE4),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 13,
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(4.0),
+                      borderSide: const BorderSide(
+                        color: Color(0xFFCDC6BA),
+                        width: 1.0,
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(4.0),
+                      borderSide: const BorderSide(
+                        color: Color(0xFF3E3129),
+                        width: 1.2,
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                // Budget Shortcut Input Field
+                const Text(
+                  'Budget',
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF6E6760),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                TextField(
+                  controller: _budgetController,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Color(0xFF201D19),
+                  ),
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: const Color(0xFFEFECE4),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 13,
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(4.0),
+                      borderSide: const BorderSide(
+                        color: Color(0xFFCDC6BA),
+                        width: 1.0,
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(4.0),
+                      borderSide: const BorderSide(
+                        color: Color(0xFF3E3129),
+                        width: 1.2,
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                // Aesthetic Input Field
+                const Text(
+                  'Aesthetic',
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF6E6760),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                TextField(
+                  controller: _aestheticController,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Color(0xFF201D19),
+                  ),
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: const Color(0xFFEFECE4),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 13,
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(4.0),
+                      borderSide: const BorderSide(
+                        color: Color(0xFFCDC6BA),
+                        width: 1.0,
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(4.0),
+                      borderSide: const BorderSide(
+                        color: Color(0xFF3E3129),
+                        width: 1.2,
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                // Item Needed Input Field
+                const Text(
+                  'Item Needed',
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF6E6760),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                TextField(
+                  controller: _itemNeededController,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Color(0xFF201D19),
+                  ),
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: const Color(0xFFEFECE4),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 13,
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(4.0),
+                      borderSide: const BorderSide(
+                        color: Color(0xFFCDC6BA),
+                        width: 1.0,
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(4.0),
+                      borderSide: const BorderSide(
+                        color: Color(0xFF3E3129),
+                        width: 1.2,
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                // Chat Input Field
+                const Text(
+                  'Chat here with our assistant',
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF6E6760),
+                  ),
+                ),
+                const SizedBox(height: 6),
                 TextField(
                   controller: _chatController,
                   style: const TextStyle(
@@ -437,221 +526,9 @@ class _FourteenthScreenState extends State<FourteenthScreen> {
                 ),
 
                 const SizedBox(height: 36),
-
-                // Section Title: Start with a feeling
-                const Text(
-                  'Start with a feeling',
-                  style: TextStyle(
-                    fontFamily: 'serif',
-                    fontSize: 28,
-                    fontWeight: FontWeight.w400,
-                    color: Color(0xFF201D19),
-                  ),
-                ),
-
-                const SizedBox(height: 16),
-
-                // Prompt Tags Wraps
-                Wrap(
-                  spacing: 10.0,
-                  runSpacing: 10.0,
-                  children: [
-                    'Dinner tonight',
-                    'Under ₹10,000',
-                    'Refresh my workwear',
-                    'Style one piece',
-                  ].map((tag) {
-                    final isSelected = tag == _selectedPromptTag;
-                    return GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _selectedPromptTag = tag;
-                        });
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 10,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? const Color(0xFF4C5547)
-                              : const Color(0xFFEFECE4),
-                          borderRadius: BorderRadius.circular(6.0),
-                          border: isSelected
-                              ? null
-                              : Border.all(
-                                  color: const Color(0xFFCDC6BA),
-                                  width: 1.0,
-                                ),
-                        ),
-                        child: Text(
-                          tag,
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                            color: isSelected
-                                ? const Color(0xFFF5F3EC)
-                                : const Color(0xFF201D19),
-                          ),
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-
-                const SizedBox(height: 16),
-
-                // Subtitle Note
-                const Text(
-                  'Sample prompts for a private styling conversation.',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF888077),
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-
-                // Occasion Shortcut Input Field
-                const Text(
-                  'Occasion shortcut',
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w500,
-                    color: Color(0xFF6E6760),
-                  ),
-                ),
-                const SizedBox(height: 6),
-                TextField(
-                  controller: _occasionController,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Color(0xFF201D19),
-                  ),
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: const Color(0xFFEFECE4),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 13,
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(4.0),
-                      borderSide: const BorderSide(
-                        color: Color(0xFFCDC6BA),
-                        width: 1.0,
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(4.0),
-                      borderSide: const BorderSide(
-                        color: Color(0xFF3E3129),
-                        width: 1.2,
-                      ),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 16),
-
-                // Budget Shortcut Input Field
-                const Text(
-                  'Budget shortcut',
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w500,
-                    color: Color(0xFF6E6760),
-                  ),
-                ),
-                const SizedBox(height: 6),
-                TextField(
-                  controller: _budgetController,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Color(0xFF201D19),
-                  ),
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: const Color(0xFFEFECE4),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 13,
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(4.0),
-                      borderSide: const BorderSide(
-                        color: Color(0xFFCDC6BA),
-                        width: 1.0,
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(4.0),
-                      borderSide: const BorderSide(
-                        color: Color(0xFF3E3129),
-                        width: 1.2,
-                      ),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 24),
-
-                // Refine This Look Button
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: OutlinedButton(
-                    onPressed: () {},
-                    style: OutlinedButton.styleFrom(
-                      backgroundColor: const Color(0xFFEFECE4),
-                      foregroundColor: const Color(0xFF201D19),
-                      side: const BorderSide(
-                        color: Color(0xFFCDC6BA),
-                        width: 1.0,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(4.0),
-                      ),
-                      elevation: 0,
-                    ),
-                    child: const Text(
-                      'Refine this look',
-                      style: TextStyle(
-                        fontSize: 14.5,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF201D19),
-                      ),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 36),
               ],
             ),
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPillTag(String label) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: const Color(0xFFEFECE4),
-        borderRadius: BorderRadius.circular(4.0),
-        border: Border.all(
-          color: const Color(0xFFCDC6BA),
-          width: 1.0,
-        ),
-      ),
-      child: Text(
-        label,
-        style: const TextStyle(
-          fontSize: 12.5,
-          fontWeight: FontWeight.w500,
-          color: Color(0xFF201D19),
         ),
       ),
     );

@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'welcome_screen.dart';
 import 'home_screen.dart';
+import 'fashion_try_on.dart';
 import 'makeup_try_on.dart';
 import 'complete_the_look.dart';
 import 'discover.dart';
 import 'lookbook.dart';
-import 'product_discovery_price_comparison.dart';
+import 'better_deals.dart';
 
 class EighteenthScreen extends StatefulWidget {
   const EighteenthScreen({super.key});
@@ -22,8 +23,8 @@ class _EighteenthScreenState extends State<EighteenthScreen> {
     'All',
     'Outfits',
     'Makeups',
-    'Accessories',
     'Jewelry',
+    'Coordinated Pieces'
   ];
 
   static const String _lipstickImageUrl =
@@ -241,34 +242,68 @@ class _EighteenthScreenState extends State<EighteenthScreen> {
                             ),
                           ),
                           const SizedBox(height: 6),
-                          GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      const EleventhScreen(),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const EleventhScreen(),
+                                    ),
+                                  );
+                                },
+                                child: const Row(
+                                  children: [
+                                    Text(
+                                      'Open item',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w500,
+                                        color: Color(0xFF5A544D),
+                                      ),
+                                    ),
+                                    SizedBox(width: 2),
+                                    Icon(
+                                      Icons.north_east_rounded,
+                                      size: 11,
+                                      color: Color(0xFF5A544D),
+                                    ),
+                                  ],
                                 ),
-                              );
-                            },
-                            child: const Row(
-                              children: [
-                                Text(
-                                  'Open item',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w500,
-                                    color: Color(0xFF5A544D),
-                                  ),
+                              ),
+                              GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const EleventhScreen(),
+                                    ),
+                                  );
+                                },
+                                child: const Row(
+                                  children: [
+                                    Text(
+                                      'Try-On',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w500,
+                                        color: Color(0xFF5A544D),
+                                      ),
+                                    ),
+                                    SizedBox(width: 2),
+                                    Icon(
+                                      Icons.north_east_rounded,
+                                      size: 11,
+                                      color: Color(0xFF5A544D),
+                                    ),
+                                  ],
                                 ),
-                                SizedBox(width: 2),
-                                Icon(
-                                  Icons.north_east_rounded,
-                                  size: 11,
-                                  color: Color(0xFF5A544D),
-                                ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -357,33 +392,66 @@ class _EighteenthScreenState extends State<EighteenthScreen> {
                             ),
                           ),
                           const SizedBox(height: 6),
-                          GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const TwelfthScreen(),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => const TwelfthScreen(),
+                                    ),
+                                  );
+                                },
+                                child: const Row(
+                                  children: [
+                                    Text(
+                                      'Open look',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w500,
+                                        color: Color(0xFF5A544D),
+                                      ),
+                                    ),
+                                    SizedBox(width: 2),
+                                    Icon(
+                                      Icons.north_east_rounded,
+                                      size: 11,
+                                      color: Color(0xFF5A544D),
+                                    ),
+                                  ],
                                 ),
-                              );
-                            },
-                            child: const Row(
-                              children: [
-                                Text(
-                                  'Open look',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w500,
-                                    color: Color(0xFF5A544D),
-                                  ),
+                              ),
+                              GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => const NinthScreen(),
+                                    ),
+                                  );
+                                },
+                                child: const Row(
+                                  children: [
+                                    Text(
+                                      'Try-On',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w500,
+                                        color: Color(0xFF5A544D),
+                                      ),
+                                    ),
+                                    SizedBox(width: 2),
+                                    Icon(
+                                      Icons.north_east_rounded,
+                                      size: 11,
+                                      color: Color(0xFF5A544D),
+                                    ),
+                                  ],
                                 ),
-                                SizedBox(width: 2),
-                                Icon(
-                                  Icons.north_east_rounded,
-                                  size: 11,
-                                  color: Color(0xFF5A544D),
-                                ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -412,7 +480,7 @@ class _EighteenthScreenState extends State<EighteenthScreen> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const NineteenthScreen(),
+                        builder: (context) => const TwentiethScreen(),
                       ),
                     );
                   },

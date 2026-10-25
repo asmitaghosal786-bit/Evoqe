@@ -56,7 +56,7 @@ class EvoqeHomeScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 14),
                     const FeatureItemRow(
-                      icon: Icons.favorite_border_rounded,
+                      icon: Icons.bookmark_border_rounded,
                       label: 'Find pieces that feel like you.',
                     ),
                     const SizedBox(height: 32),

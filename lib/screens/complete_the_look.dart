@@ -9,8 +9,8 @@ class TwelfthScreen extends StatefulWidget {
 }
 
 class _TwelfthScreenState extends State<TwelfthScreen> {
-  bool _isWaistcoatFavorited = false;
-  bool _isTrouserFavorited = false;
+  bool _isWaistcoatSaved = false;
+  bool _isTrouserSaved = false;
 
   static const String _outfitModelUrl =
       'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=500&q=80';
@@ -74,7 +74,7 @@ class _TwelfthScreenState extends State<TwelfthScreen> {
                   'Everything, in harmony.',
                   style: TextStyle(
                     fontFamily: 'serif',
-                    fontSize: 32,
+                    fontSize: 28,
                     fontWeight: FontWeight.w400,
                     color: Color(0xFF201D19),
                     letterSpacing: -0.3,
@@ -236,7 +236,7 @@ class _TwelfthScreenState extends State<TwelfthScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text(
-                      'Your coordinated pieces',
+                      'Your saved pieces',
                       style: TextStyle(
                         fontFamily: 'serif',
                         fontSize: 22,
@@ -281,10 +281,10 @@ class _TwelfthScreenState extends State<TwelfthScreen> {
                         title: 'Linen waistcoat',
                         brand: 'Maison Vale',
                         price: '₹2,400',
-                        isFavorited: _isWaistcoatFavorited,
-                        onFavoriteToggle: () {
+                        isSaved: _isWaistcoatSaved,
+                        onSavedToggle: () {
                           setState(() {
-                            _isWaistcoatFavorited = !_isWaistcoatFavorited;
+                            _isWaistcoatSaved = !_isWaistcoatSaved;
                           });
                         },
                       ),
@@ -296,10 +296,10 @@ class _TwelfthScreenState extends State<TwelfthScreen> {
                         title: 'Fluid tailored trouser',
                         brand: 'Maison Vale',
                         price: '₹2,200',
-                        isFavorited: _isTrouserFavorited,
-                        onFavoriteToggle: () {
+                        isSaved: _isTrouserSaved,
+                        onSavedToggle: () {
                           setState(() {
-                            _isTrouserFavorited = !_isTrouserFavorited;
+                            _isTrouserSaved = !_isTrouserSaved;
                           });
                         },
                       ),
@@ -321,8 +321,8 @@ class _TwelfthScreenState extends State<TwelfthScreen> {
     required String title,
     required String brand,
     required String price,
-    required bool isFavorited,
-    required VoidCallback onFavoriteToggle,
+    required bool isSaved,
+    required VoidCallback onSavedToggle,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -355,7 +355,7 @@ class _TwelfthScreenState extends State<TwelfthScreen> {
                   top: 8,
                   right: 8,
                   child: GestureDetector(
-                    onTap: onFavoriteToggle,
+                    onTap: onSavedToggle,
                     child: Container(
                       padding: const EdgeInsets.all(6),
                       decoration: const BoxDecoration(
@@ -364,13 +364,11 @@ class _TwelfthScreenState extends State<TwelfthScreen> {
                         borderRadius: BorderRadius.all(Radius.circular(4.0)),
                       ),
                       child: Icon(
-                        isFavorited
-                            ? Icons.favorite_rounded
-                            : Icons.favorite_border_rounded,
+                        isSaved
+                            ? Icons.bookmark_rounded
+                            : Icons.bookmark_border_rounded,
                         size: 16,
-                        color: isFavorited
-                            ? const Color(0xFF8B2626)
-                            : const Color(0xFF201D19),
+                        color: const Color(0xFF201D19),
                       ),
                     ),
                   ),

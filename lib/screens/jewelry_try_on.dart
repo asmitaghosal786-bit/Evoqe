@@ -143,12 +143,10 @@ class _TenthScreenState extends State<TenthScreen> {
                                 children: [
                                   Icon(
                                     _isItemSaved
-                                        ? Icons.favorite_rounded
-                                        : Icons.favorite_border_rounded,
+                                        ? Icons.bookmark_rounded
+                                        : Icons.bookmark_border_rounded,
                                     size: 14,
-                                    color: _isItemSaved
-                                        ? const Color(0xFF8B2626)
-                                        : const Color(0xFF201D19),
+                                    color: const Color(0xFF201D19),
                                   ),
                                   const SizedBox(width: 5),
                                   const Text(

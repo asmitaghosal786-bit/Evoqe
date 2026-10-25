@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'welcome_screen.dart';
 import 'home_screen.dart';
 import 'fashion_try_on.dart';
+import 'jewelry_try_on.dart';
+import 'makeup_try_on.dart';
 import 'lookbook.dart';
 import 'saved_looks.dart';
 
@@ -14,63 +16,151 @@ class ThirteenthScreen extends StatefulWidget {
 
 class _ThirteenthScreenState extends State<ThirteenthScreen> {
   int _selectedBottomNavIndex = 1; // Discover tab active
-  int _selectedCategoryIndex = 0; // "Clothing" active
+  int _selectedCategoryIndex = 0; // "Outfits" active
 
   final TextEditingController _searchController = TextEditingController();
-  final Set<String> _favoriteProductTitles = {};
+  final Set<String> _savedProductTitles = {};
 
   final List<String> _categories = const [
-    'Clothing',
-    'Dresses',
-    'Tops',
-    'Bottoms',
-    'Outerwear',
+    'Outfits',
+    'Make-up',
+    'Jewlery',
   ];
 
-  static const List<Map<String, String>> _products = [
-    {
-      'title': 'Linen waistcoat',
-      'brand': 'Maison Vale',
-      'price': '₹2,400',
-      'imageUrl':
-          'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?auto=format&fit=crop&w=500&q=80',
-    },
-    {
-      'title': 'The sculpted blazer',
-      'brand': 'Atelier Nine',
-      'price': '₹4,800',
-      'imageUrl':
-          'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=500&q=80',
-    },
-    {
-      'title': 'Fluid tailored trouser',
-      'brand': 'Maison Vale',
-      'price': '₹2,200',
-      'imageUrl':
-          'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=500&q=80',
-    },
-    {
-      'title': 'Draped silk blouse',
-      'brand': 'Linen & Line',
-      'price': '₹3,100',
-      'imageUrl':
-          'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=500&q=80',
-    },
-    {
-      'title': 'Arc shoulder bag',
-      'brand': 'Atelier Nine',
-      'price': '₹1,800',
-      'imageUrl':
-          'https://images.unsplash.com/photo-1548883354-7622d03aca27?auto=format&fit=crop&w=500&q=80',
-    },
-    {
-      'title': 'The pointed flat',
-      'brand': 'Linen & Line',
-      'price': '₹1,600',
-      'imageUrl':
-          'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=500&q=80',
-    },
-  ];
+  final Map<int, List<Map<String, String>>> _categoryProducts = {
+    0: [
+      {
+        'title': 'Linen waistcoat',
+        'brand': 'Maison Vale',
+        'price': '₹2,400',
+        'imageUrl':
+            'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?auto=format&fit=crop&w=500&q=80',
+      },
+      {
+        'title': 'The sculpted blazer',
+        'brand': 'Atelier Nine',
+        'price': '₹4,800',
+        'imageUrl':
+            'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=500&q=80',
+      },
+      {
+        'title': 'Fluid tailored trouser',
+        'brand': 'Maison Vale',
+        'price': '₹2,200',
+        'imageUrl':
+            'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=500&q=80',
+      },
+      {
+        'title': 'Draped silk blouse',
+        'brand': 'Linen & Line',
+        'price': '₹3,100',
+        'imageUrl':
+            'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=500&q=80',
+      },
+      {
+        'title': 'Arc shoulder bag',
+        'brand': 'Atelier Nine',
+        'price': '₹1,800',
+        'imageUrl':
+            'https://images.unsplash.com/photo-1548883354-7622d03aca27?auto=format&fit=crop&w=500&q=80',
+      },
+      {
+        'title': 'The pointed flat',
+        'brand': 'Linen & Line',
+        'price': '₹1,600',
+        'imageUrl':
+            'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=500&q=80',
+      },
+    ],
+    1: [
+      {
+        'title': 'Velvet matte lipstick',
+        'brand': 'Maison Beauty',
+        'price': '₹1,200',
+        'imageUrl':
+            'https://images.unsplash.com/photo-1586495777744-4413f21062fa?auto=format&fit=crop&w=500&q=80',
+      },
+      {
+        'title': 'Luminous skin tint',
+        'brand': 'Atelier Glow',
+        'price': '₹2,100',
+        'imageUrl':
+            'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=500&q=80',
+      },
+      {
+        'title': 'Sculpting bronzer palette',
+        'brand': 'Forme Make-up',
+        'price': '₹2,800',
+        'imageUrl':
+            'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?auto=format&fit=crop&w=500&q=80',
+      },
+      {
+        'title': 'Rose petal blush',
+        'brand': 'Maison Beauty',
+        'price': '₹1,500',
+        'imageUrl':
+            'https://images.unsplash.com/photo-1596704017254-9b121068fb31?auto=format&fit=crop&w=500&q=80',
+      },
+      {
+        'title': 'Precision eye defining pen',
+        'brand': 'Atelier Glow',
+        'price': '₹950',
+        'imageUrl':
+            'https://images.unsplash.com/photo-1571781926291-c477ebfd024b?auto=format&fit=crop&w=500&q=80',
+      },
+      {
+        'title': 'Dewy highlighter glow',
+        'brand': 'Forme Make-up',
+        'price': '₹1,800',
+        'imageUrl':
+            'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?auto=format&fit=crop&w=500&q=80',
+      },
+    ],
+    2: [
+      {
+        'title': 'Sculpted gold hoops',
+        'brand': 'Forme Studio',
+        'price': '₹850',
+        'imageUrl':
+            'https://images.unsplash.com/photo-1630019852942-f89202989a59?auto=format&fit=crop&w=500&q=80',
+      },
+      {
+        'title': 'Layered chain necklace',
+        'brand': 'Aura Jewels',
+        'price': '₹3,400',
+        'imageUrl':
+            'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=500&q=80',
+      },
+      {
+        'title': 'Signet statement ring',
+        'brand': 'Forme Studio',
+        'price': '₹1,500',
+        'imageUrl':
+            'https://images.unsplash.com/photo-1603561591411-07134e71a2a9?auto=format&fit=crop&w=500&q=80',
+      },
+      {
+        'title': 'Pearl drop earrings',
+        'brand': 'Aura Jewels',
+        'price': '₹2,600',
+        'imageUrl':
+            'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=500&q=80',
+      },
+      {
+        'title': 'Geometric cuff bracelet',
+        'brand': 'Forme Studio',
+        'price': '₹1,900',
+        'imageUrl':
+            'https://images.unsplash.com/photo-1611591475271-18e472620a23?auto=format&fit=crop&w=500&q=80',
+      },
+      {
+        'title': 'Delicate pavé band',
+        'brand': 'Aura Jewels',
+        'price': '₹2,200',
+        'imageUrl':
+            'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=500&q=80',
+      },
+    ],
+  };
 
   @override
   void dispose() {
@@ -80,6 +170,8 @@ class _ThirteenthScreenState extends State<ThirteenthScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final currentProducts = _categoryProducts[_selectedCategoryIndex] ?? _categoryProducts[0]!;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F3EC),
       body: SafeArea(
@@ -299,7 +391,7 @@ class _ThirteenthScreenState extends State<ThirteenthScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildProductGridRow(_products[0], _products[1]),
+                      _buildProductGridRow(currentProducts[0], currentProducts[1]),
                       const SizedBox(height: 12),
                       const Text(
                         'Illustrative products · sample prices',
@@ -309,9 +401,9 @@ class _ThirteenthScreenState extends State<ThirteenthScreen> {
                         ),
                       ),
                       const SizedBox(height: 20),
-                      _buildProductGridRow(_products[2], _products[3]),
+                      _buildProductGridRow(currentProducts[2], currentProducts[3]),
                       const SizedBox(height: 20),
-                      _buildProductGridRow(_products[4], _products[5]),
+                      _buildProductGridRow(currentProducts[4], currentProducts[5]),
                       const SizedBox(height: 16),
                       const Text(
                         'Illustrative products from fictional retailers. Sample prices, not live inventory.',
@@ -403,7 +495,7 @@ class _ThirteenthScreenState extends State<ThirteenthScreen> {
     final brand = product['brand']!;
     final price = product['price']!;
     final imageUrl = product['imageUrl']!;
-    final isFavorited = _favoriteProductTitles.contains(title);
+    final isSaved = _savedProductTitles.contains(title);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -450,21 +542,19 @@ class _ThirteenthScreenState extends State<ThirteenthScreen> {
             GestureDetector(
               onTap: () {
                 setState(() {
-                  if (isFavorited) {
-                    _favoriteProductTitles.remove(title);
+                  if (isSaved) {
+                    _savedProductTitles.remove(title);
                   } else {
-                    _favoriteProductTitles.add(title);
+                    _savedProductTitles.add(title);
                   }
                 });
               },
               child: Icon(
-                isFavorited
-                    ? Icons.favorite_rounded
-                    : Icons.favorite_border_rounded,
+                isSaved
+                    ? Icons.bookmark_rounded
+                    : Icons.bookmark_border_rounded,
                 size: 16,
-                color: isFavorited
-                    ? const Color(0xFF8B2626)
-                    : const Color(0xFF201D19),
+                color: const Color(0xFF201D19),
               ),
             ),
           ],
@@ -491,12 +581,31 @@ class _ThirteenthScreenState extends State<ThirteenthScreen> {
             ),
             GestureDetector(
               onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const NinthScreen(),
-                  ),
-                );
+                if (_selectedCategoryIndex == 1) {
+                  // Make-up -> EleventhScreen
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const EleventhScreen(),
+                    ),
+                  );
+                } else if (_selectedCategoryIndex == 2) {
+                  // Jewlery -> TenthScreen
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const TenthScreen(),
+                    ),
+                  );
+                } else {
+                  // Outfits -> NinthScreen
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const NinthScreen(),
+                    ),
+                  );
+                }
               },
               child: const Row(
                 children: [

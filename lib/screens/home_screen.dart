@@ -3,7 +3,6 @@ import 'welcome_screen.dart';
 import 'digital_style_profile_avatar.dart';
 import 'fashion_try_on.dart';
 import 'jewelry_try_on.dart';
-import 'makeup_try_on.dart';
 import 'complete_the_look.dart';
 import 'discover.dart';
 import 'ai_styling_assistant.dart';
@@ -46,9 +45,9 @@ class _EighthScreenState extends State<EighthScreen> {
   static const String _userAvatarUrl =
       'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80';
 
-  // Favorite states for suggested items
-  bool _isWaistcoatFavorited = false;
-  bool _isEarringsFavorited = false;
+  // Saved states for suggested items
+  bool _isWaistcoatSaved = false;
+  bool _isEarringsSaved = false;
 
   final List<String> _profileMenuItems = const [
     'My Style Profile',
@@ -231,7 +230,7 @@ class _EighthScreenState extends State<EighthScreen> {
               child: Column(
                 children: [
                   AspectRatio(
-                    aspectRatio: 1.5,
+                    aspectRatio: 1.2,
                     child: Image.network(
                       _heroImageUrl,
                       fit: BoxFit.cover,
@@ -263,7 +262,7 @@ class _EighthScreenState extends State<EighthScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Your Daily Edit',
+                              'ADVERTISEMENT',
                               style: TextStyle(
                                 fontFamily: 'serif',
                                 fontSize: 24,
@@ -273,7 +272,7 @@ class _EighthScreenState extends State<EighthScreen> {
                             ),
                             SizedBox(height: 2),
                             Text(
-                              'THE QUIET POWER OF TAILORING',
+                              'BEST SALES AND DISCOUNTS',
                               style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w500,
@@ -297,100 +296,33 @@ class _EighthScreenState extends State<EighthScreen> {
 
             const SizedBox(height: 20),
 
-            // Quick Action Buttons Grid (Try-On Options)
+            // Quick Action Buttons
             Column(
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildQuickActionButton(
-                        icon: Icons.checkroom_outlined,
-                        label: 'Fashion Try-On',
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const NinthScreen(),
-                            ),
-                          );
-                        },
+                _buildQuickActionButton(
+                  icon: Icons.auto_awesome,
+                  label: 'Coordinate The Look Based On Saved Pieces',
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const TwelfthScreen(),
                       ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: _buildQuickActionButton(
-                        icon: Icons.auto_awesome_outlined,
-                        label: 'Makeup Try-On',
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const EleventhScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
+                    );
+                  },
                 ),
                 const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildQuickActionButton(
-                        icon: Icons.diamond_outlined,
-                        label: 'Jewelry Try-On',
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const TenthScreen(),
-                            ),
-                          );
-                        },
+                _buildQuickActionButton(
+                  icon: Icons.smart_toy_outlined,
+                  label: 'Ask AI Style Assistant',
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const FourteenthScreen(),
                       ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: _buildQuickActionButton(
-                        icon: Icons.auto_awesome,
-                        label: 'Complete the Look',
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const TwelfthScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Expanded(
-                      flex: 1,
-                      child: _buildQuickActionButton(
-                        icon: Icons.smart_toy_outlined,
-                        label: 'Ask AI Style Assistant',
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const FourteenthScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    const Expanded(
-                      flex: 1,
-                      child: SizedBox.shrink(),
-                    ),
-                  ],
+                    );
+                  },
                 ),
               ],
             ),
@@ -402,7 +334,7 @@ class _EighthScreenState extends State<EighthScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
-                  'Suggested For You',
+                  'Popular Right Now',
                   style: TextStyle(
                     fontFamily: 'serif',
                     fontSize: 24,
@@ -456,10 +388,10 @@ class _EighthScreenState extends State<EighthScreen> {
                     title: 'Linen waistcoat',
                     brand: 'Maison Vale · sample',
                     price: '₹2,400',
-                    isFavorited: _isWaistcoatFavorited,
-                    onFavoriteToggle: () {
+                    isSaved: _isWaistcoatSaved,
+                    onSavedToggle: () {
                       setState(() {
-                        _isWaistcoatFavorited = !_isWaistcoatFavorited;
+                        _isWaistcoatSaved = !_isWaistcoatSaved;
                       });
                     },
                     onTryOnPressed: () {
@@ -479,10 +411,10 @@ class _EighthScreenState extends State<EighthScreen> {
                     title: 'Sculpted gold hoops',
                     brand: 'Forme Studio · sample',
                     price: '₹850',
-                    isFavorited: _isEarringsFavorited,
-                    onFavoriteToggle: () {
+                    isSaved: _isEarringsSaved,
+                    onSavedToggle: () {
                       setState(() {
-                        _isEarringsFavorited = !_isEarringsFavorited;
+                        _isEarringsSaved = !_isEarringsSaved;
                       });
                     },
                     onTryOnPressed: () {
@@ -916,8 +848,8 @@ class _EighthScreenState extends State<EighthScreen> {
     required String title,
     required String brand,
     required String price,
-    required bool isFavorited,
-    required VoidCallback onFavoriteToggle,
+    required bool isSaved,
+    required VoidCallback onSavedToggle,
     VoidCallback? onTryOnPressed,
   }) {
     return Column(
@@ -953,7 +885,7 @@ class _EighthScreenState extends State<EighthScreen> {
                   top: 8,
                   right: 8,
                   child: GestureDetector(
-                    onTap: onFavoriteToggle,
+                    onTap: onSavedToggle,
                     child: Container(
                       padding: const EdgeInsets.all(6),
                       decoration: const BoxDecoration(
@@ -962,13 +894,11 @@ class _EighthScreenState extends State<EighthScreen> {
                         borderRadius: BorderRadius.all(Radius.circular(4.0)),
                       ),
                       child: Icon(
-                        isFavorited
-                            ? Icons.favorite_rounded
-                            : Icons.favorite_border_rounded,
+                        isSaved
+                            ? Icons.bookmark_rounded
+                            : Icons.bookmark_border_rounded,
                         size: 16,
-                        color: isFavorited
-                            ? const Color(0xFF8B2626)
-                            : const Color(0xFF201D19),
+                        color: const Color(0xFF201D19),
                       ),
                     ),
                   ),

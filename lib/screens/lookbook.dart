@@ -373,7 +373,7 @@ class _FifteenthScreenState extends State<FifteenthScreen> {
                             elevation: 0,
                           ),
                           child: const Text(
-                            'View Saved Lookbook',
+                            'View Saved Lookbooks',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 13,

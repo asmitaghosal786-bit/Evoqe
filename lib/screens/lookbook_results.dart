@@ -15,20 +15,19 @@ class _SeventeenthScreenState extends State<SeventeenthScreen> {
 
   final List<String> _filterTabs = const [
     'Looks',
-    'Products',
     'Colors',
     'Price range',
   ];
 
   static const List<Map<String, String>> _lookCards = [
     {
-      'title': 'The considered evening',
+      'title': 'The coordinated look',
       'description': 'Ivory tailoring. Warm gold. Six coordinated pieces.',
       'imageUrl':
           'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=500&q=80',
     },
     {
-      'title': 'Quiet romance',
+      'title': 'Clothing Piece',
       'description': 'Soft drape and a clean, modern silhouette.',
       'imageUrl':
           'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=500&q=80',
@@ -181,16 +180,7 @@ class _SeventeenthScreenState extends State<SeventeenthScreen> {
 
                 const SizedBox(height: 20),
 
-                // Tag Pills Row
-                Row(
-                  children: [
-                    _buildPillTag('Warm neutrals'),
-                    const SizedBox(width: 10),
-                    _buildPillTag('Under ₹10,000'),
-                  ],
-                ),
 
-                const SizedBox(height: 20),
 
                 // Refine My Lookbook Outlined Button
                 SizedBox(
@@ -211,7 +201,7 @@ class _SeventeenthScreenState extends State<SeventeenthScreen> {
                       elevation: 0,
                     ),
                     child: const Text(
-                      'Refine My Lookbook',
+                      'Regenerate My Lookbook',
                       style: TextStyle(
                         fontSize: 14.5,
                         fontWeight: FontWeight.w600,

@@ -82,7 +82,7 @@ class _SixthScreenState extends State<SixthScreen> {
                   'Your atelier, your rules.',
                   style: TextStyle(
                     fontFamily: 'serif',
-                    fontSize: 28,
+                    fontSize: 30,
                     fontWeight: FontWeight.w400,
                     color: Color(0xFF201D19),
                     letterSpacing: -0.3,
