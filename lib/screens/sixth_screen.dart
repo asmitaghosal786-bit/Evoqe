@@ -22,8 +22,6 @@ class _SixthScreenState extends State<SixthScreen> {
   final List<String> _menuItems = const [
     'My Style Profile',
     'My Avatar',
-    'My Lookbooks',
-    'Saved Looks',
     'Orders and Shopping History',
     'Privacy and Image Permissions',
     'Notification Preferences',
@@ -84,7 +82,7 @@ class _SixthScreenState extends State<SixthScreen> {
                   'Your atelier, your rules.',
                   style: TextStyle(
                     fontFamily: 'serif',
-                    fontSize: 32,
+                    fontSize: 28,
                     fontWeight: FontWeight.w400,
                     color: Color(0xFF201D19),
                     letterSpacing: -0.3,
