@@ -1,11 +1,11 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'welcome_screen.dart';
 import 'home_screen.dart';
-import 'eighth_screen.dart';
-import 'thirteenth_screen.dart';
-import 'sixteenth_screen.dart';
-import 'seventeenth_screen.dart';
-import 'eighteenth_screen.dart';
+import 'discover.dart';
+import 'lookbook_analysis.dart';
+import 'lookbook_results.dart';
+import 'saved_looks.dart';
 
 class FifteenthScreen extends StatefulWidget {
   const FifteenthScreen({super.key});

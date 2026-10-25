@@ -1,24 +1,31 @@
 import 'package:flutter/material.dart';
-import 'home_screen.dart';
+import 'welcome_screen.dart';
 
-class TenthScreen extends StatefulWidget {
-  const TenthScreen({super.key});
+class EleventhScreen extends StatefulWidget {
+  const EleventhScreen({super.key});
 
   @override
-  State<TenthScreen> createState() => _TenthScreenState();
+  State<EleventhScreen> createState() => _EleventhScreenState();
 }
 
-class _TenthScreenState extends State<TenthScreen> {
-  String _selectedSize = 'M';
-  bool _isItemSaved = false;
+class _EleventhScreenState extends State<EleventhScreen> {
+  int _selectedShadeIndex = 3; // "Warm Rose 04" in screenshot (4th item)
 
-  static const String _jewelryModelUrl =
-      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80';
-  static const String _earringsThumbnailUrl =
-      'https://images.unsplash.com/photo-1630019852942-f89202989a59?auto=format&fit=crop&w=300&q=80';
+  static const String _makeupModelUrl =
+      'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?auto=format&fit=crop&w=800&q=80';
+
+  final List<Map<String, dynamic>> _shades = const [
+    {'name': 'Dusty Rose 01', 'color': Color(0xFFB56566)},
+    {'name': 'Soft Nude 02', 'color': Color(0xFFC89A82)},
+    {'name': 'Deep Berry 03', 'color': Color(0xFF702D38)},
+    {'name': 'Warm Rose 04', 'color': Color(0xFF9E2B2B)},
+    {'name': 'Velvet Peach 05', 'color': Color(0xFFD6A28C)},
+  ];
 
   @override
   Widget build(BuildContext context) {
+    final currentShade = _shades[_selectedShadeIndex];
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F3EC),
       body: SafeArea(
@@ -65,9 +72,9 @@ class _TenthScreenState extends State<TenthScreen> {
 
                 const SizedBox(height: 20),
 
-                // Main Jewelry Try-On Image Stage
+                // Main Makeup Try-On Image Stage
                 AspectRatio(
-                  aspectRatio: 0.82,
+                  aspectRatio: 0.95,
                   child: Container(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(4.0),
@@ -78,7 +85,7 @@ class _TenthScreenState extends State<TenthScreen> {
                       children: [
                         Positioned.fill(
                           child: Image.network(
-                            _jewelryModelUrl,
+                            _makeupModelUrl,
                             fit: BoxFit.cover,
                             errorBuilder: (context, error, stackTrace) =>
                                 Container(
@@ -108,7 +115,7 @@ class _TenthScreenState extends State<TenthScreen> {
                               borderRadius: BorderRadius.circular(2.0),
                             ),
                             child: const Text(
-                              'JEWELRY PREVIEW DEMO',
+                              'MAKEUP PREVIEW DEMO',
                               style: TextStyle(
                                 fontSize: 9.5,
                                 fontWeight: FontWeight.w700,
@@ -119,42 +126,38 @@ class _TenthScreenState extends State<TenthScreen> {
                           ),
                         ),
 
-                        // Bottom Right Save Item Button
+                        // Bottom Right Reset Button
                         Positioned(
                           right: 14,
                           bottom: 14,
                           child: GestureDetector(
                             onTap: () {
                               setState(() {
-                                _isItemSaved = !_isItemSaved;
+                                _selectedShadeIndex = 3;
                               });
                             },
                             child: Container(
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
+                                horizontal: 10,
+                                vertical: 5,
                               ),
                               decoration: BoxDecoration(
                                 color: const Color(0xEBF5F3EC),
                                 borderRadius: BorderRadius.circular(20.0),
                               ),
-                              child: Row(
+                              child: const Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Icon(
-                                    _isItemSaved
-                                        ? Icons.favorite_rounded
-                                        : Icons.favorite_border_rounded,
-                                    size: 14,
-                                    color: _isItemSaved
-                                        ? const Color(0xFF8B2626)
-                                        : const Color(0xFF201D19),
+                                    Icons.refresh_rounded,
+                                    size: 13,
+                                    color: Color(0xFF201D19),
                                   ),
-                                  const SizedBox(width: 5),
-                                  const Text(
-                                    'Save Item',
+                                  SizedBox(width: 4),
+                                  Text(
+                                    'Reset',
                                     style: TextStyle(
-                                      fontSize: 11.5,
+                                      fontSize: 11,
                                       fontWeight: FontWeight.w500,
                                       color: Color(0xFF201D19),
                                     ),
@@ -171,107 +174,68 @@ class _TenthScreenState extends State<TenthScreen> {
 
                 const SizedBox(height: 18),
 
-                // Product Item Summary Row
+                // Color Swatches Row & Counter
                 Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(4.0),
-                        color: const Color(0xFFE2DDD3),
-                      ),
-                      clipBehavior: Clip.antiAlias,
-                      child: Image.network(
-                        _earringsThumbnailUrl,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) =>
-                            Container(color: const Color(0xFFDDD7CC)),
-                      ),
+                    Row(
+                      children: List.generate(_shades.length, (index) {
+                        final shade = _shades[index];
+                        final isSelected = index == _selectedShadeIndex;
+                        return GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _selectedShadeIndex = index;
+                            });
+                          },
+                          child: Container(
+                            margin: const EdgeInsets.only(right: 12),
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: shade['color'] as Color,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: isSelected
+                                    ? const Color(0xFF201D19)
+                                    : const Color(0xFFCDC6BA),
+                                width: isSelected ? 2.5 : 1.0,
+                              ),
+                            ),
+                          ),
+                        );
+                      }),
                     ),
-                    const SizedBox(width: 14),
-                    const Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Sculpted gold hoops',
-                            style: TextStyle(
-                              fontFamily: 'serif',
-                              fontSize: 20,
-                              fontWeight: FontWeight.w400,
-                              color: Color(0xFF201D19),
-                            ),
-                          ),
-                          SizedBox(height: 2),
-                          Text(
-                            'Gold tone · 18 mm · Forme Studio · sample ₹850',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Color(0xFF888077),
-                            ),
-                          ),
-                        ],
+                    Text(
+                      '0${_selectedShadeIndex + 1} / 0${_shades.length}',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: Color(0xFF888077),
                       ),
                     ),
                   ],
                 ),
 
-                const SizedBox(height: 6),
-
-                // Disclaimer Note
-                const Text(
-                  'Illustrative preview · not a precise scale or fit simulation',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Color(0xFF888077),
-                  ),
-                ),
-
                 const SizedBox(height: 16),
 
-                // Size Selector (S, M, L)
-                Row(
-                  children: ['S', 'M', 'L'].map((size) {
-                    final isSelected = size == _selectedSize;
-                    return GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _selectedSize = size;
-                        });
-                      },
-                      child: Container(
-                        margin: const EdgeInsets.only(right: 10),
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? const Color(0xFF3E3129)
-                              : const Color(0xFFEFECE4),
-                          borderRadius: BorderRadius.circular(4.0),
-                          border: Border.all(
-                            color: isSelected
-                                ? const Color(0xFF3E3129)
-                                : const Color(0xFFCDC6BA),
-                            width: 1.0,
-                          ),
-                        ),
-                        child: Center(
-                          child: Text(
-                            size,
-                            style: TextStyle(
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w600,
-                              color: isSelected
-                                  ? const Color(0xFFF5F3EC)
-                                  : const Color(0xFF201D19),
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
-                  }).toList(),
+                // Product Summary Header
+                Text(
+                  'Soft satin lip color',
+                  style: const TextStyle(
+                    fontFamily: 'serif',
+                    fontSize: 22,
+                    fontWeight: FontWeight.w400,
+                    color: Color(0xFF201D19),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '${currentShade['name']} · Muse Beauty · sample ₹650',
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    color: Color(0xFF888077),
+                  ),
                 ),
 
                 const SizedBox(height: 20),
@@ -279,7 +243,7 @@ class _TenthScreenState extends State<TenthScreen> {
                 // Primary Try-On Button
                 SizedBox(
                   width: double.infinity,
-                  height: 52,
+                  height: 50,
                   child: ElevatedButton(
                     onPressed: () {},
                     style: ElevatedButton.styleFrom(
@@ -290,35 +254,85 @@ class _TenthScreenState extends State<TenthScreen> {
                         borderRadius: BorderRadius.circular(4.0),
                       ),
                     ),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          'Try-On',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 0.2,
-                          ),
-                        ),
-                        SizedBox(width: 8),
-                        Icon(
-                          Icons.diamond_outlined,
-                          size: 18,
-                        ),
-                      ],
+                    child: const Text(
+                      'Try-On',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.2,
+                      ),
                     ),
                   ),
                 ),
 
+                const SizedBox(height: 12),
+
+                // Action Buttons Row: "Apply Shade" & "View Product"
+                Row(
+                  children: [
+                    Expanded(
+                      child: SizedBox(
+                        height: 48,
+                        child: ElevatedButton(
+                          onPressed: () {},
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF3E3129),
+                            foregroundColor: const Color(0xFFF5F3EC),
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(4.0),
+                            ),
+                          ),
+                          child: const Text(
+                            'Apply Shade',
+                            style: TextStyle(
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: SizedBox(
+                        height: 48,
+                        child: OutlinedButton(
+                          onPressed: () {},
+                          style: OutlinedButton.styleFrom(
+                            backgroundColor: const Color(0xFFEFECE4),
+                            foregroundColor: const Color(0xFF201D19),
+                            side: const BorderSide(
+                              color: Color(0xFFCDC6BA),
+                              width: 1.0,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(4.0),
+                            ),
+                            elevation: 0,
+                          ),
+                          child: const Text(
+                            'View Product',
+                            style: TextStyle(
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF201D19),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
                 const SizedBox(height: 20),
 
-                // Secondary Actions: See Similar Pieces
+                // Secondary Actions: See Similar Shades
                 Center(
                   child: GestureDetector(
                     onTap: () {},
                     child: const Text(
-                      'See similar pieces',
+                      'See similar shades',
                       style: TextStyle(
                         fontFamily: 'serif',
                         fontSize: 18,
@@ -350,7 +364,7 @@ class _TenthScreenState extends State<TenthScreen> {
                       elevation: 0,
                     ),
                     child: const Text(
-                      'Save look',
+                      'Save Look',
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'home_screen.dart';
+import 'welcome_screen.dart';
 
 class NinthScreen extends StatefulWidget {
   const NinthScreen({super.key});

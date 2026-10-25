@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'home_screen.dart';
-import 'ninth_screen.dart';
+import 'welcome_screen.dart';
+import 'fashion_try_on.dart';
 
 class SeventeenthScreen extends StatefulWidget {
   const SeventeenthScreen({super.key});

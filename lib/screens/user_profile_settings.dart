@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'welcome_screen.dart';
+import 'digital_style_profile_avatar.dart';
 import 'home_screen.dart';
-import 'seventh_screen.dart';
-import 'eighth_screen.dart';
-import 'thirteenth_screen.dart';
-import 'fifteenth_screen.dart';
-import 'eighteenth_screen.dart';
+import 'discover.dart';
+import 'lookbook.dart';
+import 'saved_looks.dart';
 
 class SixthScreen extends StatefulWidget {
   const SixthScreen({super.key});

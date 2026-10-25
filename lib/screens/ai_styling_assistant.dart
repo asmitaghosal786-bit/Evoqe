@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'home_screen.dart';
-import 'ninth_screen.dart';
-import 'twelfth_screen.dart';
+import 'welcome_screen.dart';
+import 'fashion_try_on.dart';
+import 'complete_the_look.dart';
 
 class FourteenthScreen extends StatefulWidget {
   const FourteenthScreen({super.key});

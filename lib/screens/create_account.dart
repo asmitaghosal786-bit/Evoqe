@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'home_screen.dart';
-import 'third_screen.dart';
+import 'welcome_screen.dart';
+import 'selfie_capture.dart';
 
 class SecondScreen extends StatefulWidget {
   const SecondScreen({super.key});
