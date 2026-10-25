@@ -53,8 +53,6 @@ class _EighthScreenState extends State<EighthScreen> {
   final List<String> _profileMenuItems = const [
     'My Style Profile',
     'My Avatar',
-    'My Lookbooks',
-    'Saved Looks',
     'Orders and Shopping History',
     'Privacy and Image Permissions',
     'Notification Preferences',
