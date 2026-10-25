@@ -1,7 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'home_screen.dart';
-import 'fourth_screen.dart';
+import 'welcome_screen.dart';
+import 'full_body_capture.dart';
 
 class ThirdScreen extends StatefulWidget {
   const ThirdScreen({super.key});

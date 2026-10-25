@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+import 'welcome_screen.dart';
 import 'home_screen.dart';
-import 'eighth_screen.dart';
-import 'ninth_screen.dart';
-import 'fifteenth_screen.dart';
-import 'eighteenth_screen.dart';
+import 'fashion_try_on.dart';
+import 'lookbook.dart';
+import 'saved_looks.dart';
 
 class ThirteenthScreen extends StatefulWidget {
   const ThirteenthScreen({super.key});

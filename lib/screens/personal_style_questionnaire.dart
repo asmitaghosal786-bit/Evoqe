@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'home_screen.dart';
-import 'sixth_screen.dart';
+import 'welcome_screen.dart';
+import 'user_profile_settings.dart';
 
 class FifthScreen extends StatefulWidget {
   const FifthScreen({super.key});

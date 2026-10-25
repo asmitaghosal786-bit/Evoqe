@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
+import 'welcome_screen.dart';
 import 'home_screen.dart';
-import 'eighth_screen.dart';
-import 'eleventh_screen.dart';
-import 'twelfth_screen.dart';
-import 'thirteenth_screen.dart';
-import 'fifteenth_screen.dart';
-import 'nineteenth_screen.dart';
+import 'makeup_try_on.dart';
+import 'complete_the_look.dart';
+import 'discover.dart';
+import 'lookbook.dart';
+import 'product_discovery_price_comparison.dart';
 
 class EighteenthScreen extends StatefulWidget {
   const EighteenthScreen({super.key});

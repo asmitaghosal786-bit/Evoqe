@@ -1,7 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'home_screen.dart';
-import 'fifth_screen.dart';
+import 'welcome_screen.dart';
+import 'personal_style_questionnaire.dart';
 
 class FourthScreen extends StatefulWidget {
   const FourthScreen({super.key});

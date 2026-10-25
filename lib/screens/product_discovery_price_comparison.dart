@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'home_screen.dart';
-import 'ninth_screen.dart';
-import 'twentieth_screen.dart';
+import 'welcome_screen.dart';
+import 'fashion_try_on.dart';
+import 'retailer_checkout_1.dart';
 
 class NineteenthScreen extends StatelessWidget {
   const NineteenthScreen({super.key});

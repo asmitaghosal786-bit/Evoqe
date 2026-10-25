@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'home_screen.dart';
-import 'seventeenth_screen.dart';
+import 'welcome_screen.dart';
+import 'lookbook_results.dart';
 
 class SixteenthScreen extends StatelessWidget {
   const SixteenthScreen({super.key});
