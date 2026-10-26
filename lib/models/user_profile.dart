@@ -43,16 +43,83 @@ class UserProfile {
     Set<String>? budget,
     Set<String>? aesthetics,
   })  : bodyPhotoPaths = bodyPhotoPaths ??
-            {
-              'front': null,
-              'left': null,
-              'right': null,
-              'back': null,
-            },
+      {
+        'front': null,
+        'left': null,
+        'right': null,
+        'back': null,
+      },
         wardrobe = wardrobe ?? {},
         beauty = beauty ?? {},
         jewelry = jewelry ?? {},
         season = season ?? {},
         budget = budget ?? {},
         aesthetics = aesthetics ?? {};
+
+  /// JSON-safe map (Sets become Lists) for storing in the local database.
+  Map<String, dynamic> toJson() => {
+    'name': name,
+    'email': email,
+    'selfiePath': selfiePath,
+    'useAvatarInsteadOfPhoto': useAvatarInsteadOfPhoto,
+    'bodyPhotoPaths': bodyPhotoPaths,
+    'heightCm': heightCm,
+    'weightKg': weightKg,
+    'clothingSize': clothingSize,
+    'bustSize': bustSize,
+    'hipSize': hipSize,
+    'shoeSize': shoeSize,
+    'skinToneIndex': skinToneIndex,
+    'undertoneIndex': undertoneIndex,
+    'fitIndex': fitIndex,
+    'wardrobe': wardrobe.toList(),
+    'beauty': beauty.toList(),
+    'jewelry': jewelry.toList(),
+    'season': season.toList(),
+    'budget': budget.toList(),
+    'aesthetics': aesthetics.toList(),
+  };
+
+  factory UserProfile.fromJson(Map<String, dynamic> json) {
+    Set<String> stringSet(String key) =>
+        ((json[key] as List?) ?? const []).map((e) => e as String).toSet();
+
+    // Start from the default four angles so missing keys never break the UI,
+    // then overlay whatever was saved.
+    final photos = <String, String?>{
+      'front': null,
+      'left': null,
+      'right': null,
+      'back': null,
+    };
+    final savedPhotos = json['bodyPhotoPaths'] as Map?;
+    if (savedPhotos != null) {
+      savedPhotos.forEach((k, v) => photos[k as String] = v as String?);
+    }
+
+    return UserProfile(
+      name: json['name'] as String,
+      email: json['email'] as String,
+      selfiePath: json['selfiePath'] as String?,
+      useAvatarInsteadOfPhoto:
+      (json['useAvatarInsteadOfPhoto'] as bool?) ?? false,
+      bodyPhotoPaths: photos,
+      // num -> double, because JSON may give back an int (e.g. 170 not 170.0)
+      heightCm: (json['heightCm'] as num?)?.toDouble(),
+      weightKg: (json['weightKg'] as num?)?.toDouble(),
+      clothingSize: json['clothingSize'] as String?,
+      bustSize: json['bustSize'] as String?,
+      hipSize: json['hipSize'] as String?,
+      shoeSize: json['shoeSize'] as String?,
+      skinToneIndex: json['skinToneIndex'] as int?,
+      undertoneIndex: json['undertoneIndex'] as int?,
+      fitIndex: json['fitIndex'] as int?,
+      wardrobe: stringSet('wardrobe'),
+      beauty: stringSet('beauty'),
+      jewelry: stringSet('jewelry'),
+      season: stringSet('season'),
+      budget: stringSet('budget'),
+      aesthetics: stringSet('aesthetics'),
+    );
+  }
 }

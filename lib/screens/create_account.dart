@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../services/session_service.dart';
+import '../services/auth_service.dart';
+import '../state/session_state.dart';
 import 'home_screen.dart';
 import 'selfie_capture.dart';
 import 'welcome_screen.dart';
@@ -94,7 +95,7 @@ class _SecondScreenState extends State<SecondScreen> {
 
   void _routeAfterAuth() {
     if (!mounted) return;
-    final session = context.read<SessionService>();
+    final session = context.read<SessionState>();
     if (session.hasCompletedOnboarding) {
       // TODO(nav): existing user with completed onboarding goes to home.
       Navigator.pushAndRemoveUntil(
@@ -130,7 +131,7 @@ class _SecondScreenState extends State<SecondScreen> {
       _isLoading = true;
     });
 
-    final session = context.read<SessionService>();
+    final session = context.read<SessionState>();
     final name = _nameController.text.trim();
     final email = _emailController.text.trim().toLowerCase();
     final password = _passwordController.text;
@@ -213,7 +214,7 @@ class _SecondScreenState extends State<SecondScreen> {
       _isLoading = true;
     });
 
-    final session = context.read<SessionService>();
+    final session = context.read<SessionState>();
     final error = await session.signInWithProvider(
       provider: SocialProvider.google,
       name: account['name']!,
@@ -258,7 +259,7 @@ class _SecondScreenState extends State<SecondScreen> {
       _isLoading = true;
     });
 
-    final session = context.read<SessionService>();
+    final session = context.read<SessionState>();
     final error = await session.signInWithProvider(
       provider: SocialProvider.apple,
       name: 'Ananya Sharma',
@@ -1158,8 +1159,10 @@ class _ForgotPasswordSheetState extends State<_ForgotPasswordSheet> {
       return;
     }
 
-    final session = context.read<SessionService>();
-    if (!session.accountExists(email)) {
+    final session = context.read<SessionState>();
+    final exists = await session.accountExists(email);
+    if (!mounted) return;
+    if (!exists) {
       setState(() {
         _emailError = 'No account found for this email';
       });
@@ -1205,7 +1208,7 @@ class _ForgotPasswordSheetState extends State<_ForgotPasswordSheet> {
       _confirmError = null;
     });
 
-    final session = context.read<SessionService>();
+    final session = context.read<SessionState>();
     final error = await session.resetPassword(
       email: _emailController.text.trim(),
       newPassword: newPassword,

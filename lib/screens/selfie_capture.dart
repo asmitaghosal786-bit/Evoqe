@@ -1,5 +1,11 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
+import '../data/security/photo_picker.dart';
+import '../data/security/secure_media_store.dart';
+import '../state/session_state.dart';
+import '../widgets/secure_image.dart';
 import 'welcome_screen.dart';
 import 'full_body_capture.dart';
 
@@ -12,10 +18,57 @@ class ThirdScreen extends StatefulWidget {
 
 class _ThirdScreenState extends State<ThirdScreen> {
   bool _usePhotoPrivately = true;
+  bool _isBusy = false;
+  String? _selfieName; // encrypted file name, not a path
 
-  // High quality portrait image matching the face-centered portrait
+  // Sample portrait shown until the user adds their own
   static const String _portraitImageUrl =
       'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80';
+
+  @override
+  void initState() {
+    super.initState();
+    final user = context.read<SessionState>().currentUser;
+    _selfieName = user?.selfiePath;
+    _usePhotoPrivately = !(user?.useAvatarInsteadOfPhoto ?? false);
+  }
+
+  Future<void> _pickSelfie(ImageSource source) async {
+    if (_isBusy) return;
+    final store = context.read<SecureMediaStore>();
+    final session = context.read<SessionState>();
+    setState(() => _isBusy = true);
+    try {
+      final name = await PhotoPicker(store).pick(
+        source: source,
+        camera: CameraDevice.front,
+        replacing: _selfieName,
+      );
+      if (name != null) {
+        await session.updateProfile((p) => p.selfiePath = name);
+        if (mounted) setState(() => _selfieName = name);
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not save the photo. Try again.')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isBusy = false);
+    }
+  }
+
+  Future<void> _continue() async {
+    await context
+        .read<SessionState>()
+        .updateProfile((p) => p.useAvatarInsteadOfPhoto = !_usePhotoPrivately);
+    if (!mounted) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const FourthScreen()),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -104,7 +157,12 @@ class _ThirdScreenState extends State<ThirdScreen> {
                     child: Stack(
                       children: [
                         Positioned.fill(
-                          child: Image.network(
+                          child: _selfieName != null
+                              ? SecureImage(
+                            fileName: _selfieName,
+                            placeholder: _buildImagePlaceholder(),
+                          )
+                              : Image.network(
                             _portraitImageUrl,
                             fit: BoxFit.cover,
                             errorBuilder: (context, error, stackTrace) =>
@@ -124,6 +182,7 @@ class _ThirdScreenState extends State<ThirdScreen> {
                         ),
 
                         // Static Preview Badge Overlay
+                        if(_selfieName != null)
                         Positioned(
                           left: 14,
                           bottom: 14,
@@ -161,7 +220,7 @@ class _ThirdScreenState extends State<ThirdScreen> {
                       child: SizedBox(
                         height: 48,
                         child: ElevatedButton.icon(
-                          onPressed: () {},
+                          onPressed: _isBusy ? null : () => _pickSelfie(ImageSource.camera),
                           icon: const Text(
                             'Take photo',
                             style: TextStyle(
@@ -191,7 +250,7 @@ class _ThirdScreenState extends State<ThirdScreen> {
                       child: SizedBox(
                         height: 48,
                         child: OutlinedButton(
-                          onPressed: () {},
+                          onPressed: _isBusy ? null : () => _pickSelfie(ImageSource.gallery),
                           style: OutlinedButton.styleFrom(
                             backgroundColor: const Color(0xFFEFECE4),
                             foregroundColor: const Color(0xFF201D19),
@@ -241,7 +300,7 @@ class _ThirdScreenState extends State<ThirdScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     GestureDetector(
-                      onTap: () {},
+                      onTap: () => _pickSelfie(ImageSource.camera),
                       child: const Row(
                         children: [
                           Icon(
@@ -369,14 +428,7 @@ class _ThirdScreenState extends State<ThirdScreen> {
                   width: double.infinity,
                   height: 52,
                   child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const FourthScreen(),
-                        ),
-                      );
-                    },
+                    onPressed: _continue,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF3E3129),
                       foregroundColor: const Color(0xFFF5F3EC),
