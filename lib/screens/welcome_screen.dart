@@ -70,7 +70,8 @@ class EvoqeHomeScreen extends StatelessWidget {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const SecondScreen(),
+                            builder: (context) =>
+                                const SecondScreen(initialMode: AuthMode.signUp),
                           ),
                         );
                       },
@@ -85,7 +86,8 @@ class EvoqeHomeScreen extends StatelessWidget {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const SecondScreen(),
+                            builder: (context) =>
+                                const SecondScreen(initialMode: AuthMode.logIn),
                           ),
                         );
                       },

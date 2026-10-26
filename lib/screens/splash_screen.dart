@@ -1,24 +1,74 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'welcome_screen.dart';
 
-class SplashScreen extends StatelessWidget {
+class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
+  @override
+  State<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen> {
   // Vintage fashion illustration / moodboard background image
   static const String _backgroundImageUrl =
       'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?auto=format&fit=crop&w=1000&q=80';
 
+  Timer? _timer;
+  bool _hasNavigated = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer(const Duration(seconds: 3), () {
+      _goToNext();
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    try {
+      precacheImage(
+        const NetworkImage(_backgroundImageUrl),
+        context,
+        onError: (exception, stackTrace) {},
+      );
+    } catch (_) {}
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  void _goToNext() {
+    if (_hasNavigated || !mounted) return;
+    _hasNavigated = true;
+    _timer?.cancel();
+
+    // TODO: later, if a user session exists, navigate to EighthScreen (home_screen.dart) instead of EvoqeHomeScreen.
+    Navigator.pushReplacement(
+      context,
+      PageRouteBuilder(
+        transitionDuration: const Duration(milliseconds: 400),
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            const EvoqeHomeScreen(),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(
+            opacity: animation,
+            child: child,
+          );
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const EvoqeHomeScreen(),
-          ),
-        );
-      },
+      onTap: _goToNext,
       child: Scaffold(
         backgroundColor: const Color(0xFFF5F3EC),
         body: Stack(
