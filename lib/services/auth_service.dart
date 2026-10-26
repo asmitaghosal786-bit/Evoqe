@@ -9,7 +9,7 @@ enum SocialProvider { google, apple }
 
 /// Shared validation rules so screens and services never drift apart.
 class Validators {
-  static final _emailRegex = RegExp(r'^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$');
+  static final _emailRegex = RegExp(r'^[\w-.]+@([\w-]+\.)+[\w-]{2,}$');
 
   static bool isValidEmail(String email) =>
       email.trim().isNotEmpty && _emailRegex.hasMatch(email.trim());
@@ -88,6 +88,16 @@ class AuthService {
     if (passwordError != null) return AuthResult.failure(passwordError);
 
     final key = _normalize(email);
+    if (await _accounts.existsRaw(key)) {
+      final existing = await _accounts.find(key);
+      if (existing != null) {
+        return const AuthResult.failure(
+            'An account with this email already exists.');
+      } else {
+        await _accounts.delete(key);
+      }
+    }
+
     final profile = UserProfile(name: name.trim(), email: email.trim());
     final record = AccountRecord(
       email: key,
@@ -127,7 +137,13 @@ class AuthService {
   }) async {
     final key = _normalize(email);
     final existing = await _accounts.find(key);
-    if (existing != null) return _toResult(existing);
+    if (existing != null) {
+      if (existing.passwordHash != null && existing.socialProvider == null) {
+        return const AuthResult.failure(
+            'This email is registered with a password. Please log in with your password.');
+      }
+      return _toResult(existing);
+    }
 
     final profile = UserProfile(name: name.trim(), email: email.trim());
     final record = AccountRecord(

@@ -20,6 +20,14 @@ class UserProfile {
   Set<String> season;
   Set<String> budget;
   Set<String> aesthetics;
+  Set<String> palette;
+  Set<String> customWardrobe;
+  Set<String> customBeauty;
+  Set<String> customJewelry;
+  Set<String> customSeason;
+  Set<String> customBudget;
+  Set<String> customAesthetics;
+  Set<String> customPalette;
 
   UserProfile({
     required this.name,
@@ -42,6 +50,14 @@ class UserProfile {
     Set<String>? season,
     Set<String>? budget,
     Set<String>? aesthetics,
+    Set<String>? palette,
+    Set<String>? customWardrobe,
+    Set<String>? customBeauty,
+    Set<String>? customJewelry,
+    Set<String>? customSeason,
+    Set<String>? customBudget,
+    Set<String>? customAesthetics,
+    Set<String>? customPalette,
   })  : bodyPhotoPaths = bodyPhotoPaths ??
       {
         'front': null,
@@ -54,7 +70,15 @@ class UserProfile {
         jewelry = jewelry ?? {},
         season = season ?? {},
         budget = budget ?? {},
-        aesthetics = aesthetics ?? {};
+        aesthetics = aesthetics ?? {},
+        palette = palette ?? {},
+        customWardrobe = customWardrobe ?? {},
+        customBeauty = customBeauty ?? {},
+        customJewelry = customJewelry ?? {},
+        customSeason = customSeason ?? {},
+        customBudget = customBudget ?? {},
+        customAesthetics = customAesthetics ?? {},
+        customPalette = customPalette ?? {};
 
   /// JSON-safe map (Sets become Lists) for storing in the local database.
   Map<String, dynamic> toJson() => {
@@ -78,6 +102,14 @@ class UserProfile {
     'season': season.toList(),
     'budget': budget.toList(),
     'aesthetics': aesthetics.toList(),
+    'palette': palette.toList(),
+    'customWardrobe': customWardrobe.toList(),
+    'customBeauty': customBeauty.toList(),
+    'customJewelry': customJewelry.toList(),
+    'customSeason': customSeason.toList(),
+    'customBudget': customBudget.toList(),
+    'customAesthetics': customAesthetics.toList(),
+    'customPalette': customPalette.toList(),
   };
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
@@ -120,6 +152,14 @@ class UserProfile {
       season: stringSet('season'),
       budget: stringSet('budget'),
       aesthetics: stringSet('aesthetics'),
+      palette: stringSet('palette'),
+      customWardrobe: stringSet('customWardrobe'),
+      customBeauty: stringSet('customBeauty'),
+      customJewelry: stringSet('customJewelry'),
+      customSeason: stringSet('customSeason'),
+      customBudget: stringSet('customBudget'),
+      customAesthetics: stringSet('customAesthetics'),
+      customPalette: stringSet('customPalette'),
     );
   }
 }

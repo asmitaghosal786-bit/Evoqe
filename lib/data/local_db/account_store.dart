@@ -52,6 +52,25 @@ class AccountStore {
   Future<String> _seal(Map<String, dynamic> profile) =>
       _crypto.encryptString(jsonEncode(profile));
 
+  /// Checks whether a record exists for [normalizedEmail] without attempting
+  /// to decrypt its profile payload.
+  Future<bool> existsRaw(String normalizedEmail) async {
+    final count = Sqflite.firstIntValue(await _db.rawQuery(
+      'SELECT COUNT(*) FROM $_table WHERE email = ?',
+      [normalizedEmail],
+    ));
+    return (count ?? 0) > 0;
+  }
+
+  /// Deletes the account record for [normalizedEmail].
+  Future<void> delete(String normalizedEmail) async {
+    await _db.delete(
+      _table,
+      where: 'email = ?',
+      whereArgs: [normalizedEmail],
+    );
+  }
+
   Future<AccountRecord?> find(String normalizedEmail) async {
     final rows = await _db.query(
       _table,

@@ -340,26 +340,4 @@ class _SeventeenthScreenState extends State<SeventeenthScreen> {
       ],
     );
   }
-
-  Widget _buildPillTag(String label) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: const Color(0xFFEFECE4),
-        borderRadius: BorderRadius.circular(4.0),
-        border: Border.all(
-          color: const Color(0xFFCDC6BA),
-          width: 1.0,
-        ),
-      ),
-      child: Text(
-        label,
-        style: const TextStyle(
-          fontSize: 12.5,
-          fontWeight: FontWeight.w500,
-          color: Color(0xFF201D19),
-        ),
-      ),
-    );
-  }
 }

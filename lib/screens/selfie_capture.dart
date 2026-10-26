@@ -17,24 +17,35 @@ class ThirdScreen extends StatefulWidget {
 }
 
 class _ThirdScreenState extends State<ThirdScreen> {
-  bool _usePhotoPrivately = true;
+  bool _useAvatarInstead = false;
   bool _isBusy = false;
+  ImageSource _lastSource = ImageSource.camera;
   String? _selfieName; // encrypted file name, not a path
-
-  // Sample portrait shown until the user adds their own
-  static const String _portraitImageUrl =
-      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80';
 
   @override
   void initState() {
     super.initState();
     final user = context.read<SessionState>().currentUser;
     _selfieName = user?.selfiePath;
-    _usePhotoPrivately = !(user?.useAvatarInsteadOfPhoto ?? false);
+    _useAvatarInstead = user?.useAvatarInsteadOfPhoto ?? false;
+  }
+
+  void _showSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: const TextStyle(color: Color(0xFFF5F3EC)),
+        ),
+        backgroundColor: const Color(0xFF3E3129),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
   Future<void> _pickSelfie(ImageSource source) async {
-    if (_isBusy) return;
+    if (_isBusy || _useAvatarInstead) return;
+    _lastSource = source;
     final store = context.read<SecureMediaStore>();
     final session = context.read<SessionState>();
     setState(() => _isBusy = true);
@@ -48,11 +59,17 @@ class _ThirdScreenState extends State<ThirdScreen> {
         await session.updateProfile((p) => p.selfiePath = name);
         if (mounted) setState(() => _selfieName = name);
       }
-    } catch (_) {
+    } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not save the photo. Try again.')),
-        );
+        final errString = e.toString().toLowerCase();
+        if (errString.contains('save') || errString.contains('encrypt')) {
+          _showSnackBar('Could not save the photo. Try again.');
+        } else if (source == ImageSource.camera) {
+          _showSnackBar(
+              "Couldn't open the camera. Check permissions or try Upload photo.");
+        } else {
+          _showSnackBar("Couldn't open your photos. Please try again.");
+        }
       }
     } finally {
       if (mounted) setState(() => _isBusy = false);
@@ -60,10 +77,18 @@ class _ThirdScreenState extends State<ThirdScreen> {
   }
 
   Future<void> _continue() async {
+    final canContinue = _selfieName != null || _useAvatarInstead;
+    if (!canContinue) {
+      _showSnackBar('Add a photo or choose an avatar to continue.');
+      return;
+    }
+
     await context
         .read<SessionState>()
-        .updateProfile((p) => p.useAvatarInsteadOfPhoto = !_usePhotoPrivately);
+        .updateProfile((p) => p.useAvatarInsteadOfPhoto = _useAvatarInstead);
     if (!mounted) return;
+
+    // TODO(nav): first-time onboarding flow.
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const FourthScreen()),
@@ -72,6 +97,9 @@ class _ThirdScreenState extends State<ThirdScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final canContinue = _selfieName != null || _useAvatarInstead;
+    final isPhotoActionEnabled = !_isBusy && !_useAvatarInstead;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F3EC),
       body: SafeArea(
@@ -156,23 +184,23 @@ class _ThirdScreenState extends State<ThirdScreen> {
                     clipBehavior: Clip.antiAlias,
                     child: Stack(
                       children: [
+                        // Image or Placeholder
                         Positioned.fill(
                           child: _selfieName != null
                               ? SecureImage(
-                            fileName: _selfieName,
-                            placeholder: _buildImagePlaceholder(),
-                          )
-                              : Image.network(
-                            _portraitImageUrl,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) =>
-                                _buildImagePlaceholder(),
-                            loadingBuilder: (context, child, loadingProgress) {
-                              if (loadingProgress == null) return child;
-                              return _buildImagePlaceholder();
-                            },
-                          ),
+                                  fileName: _selfieName,
+                                  placeholder: _buildImagePlaceholder(),
+                                )
+                              : _buildImagePlaceholder(),
                         ),
+
+                        // Avatar Mode 40% Opacity Overlay
+                        if (_useAvatarInstead)
+                          Positioned.fill(
+                            child: Container(
+                              color: const Color(0x66F5F3EC),
+                            ),
+                          ),
 
                         // Dashed Face Oval Guide Overlay
                         Positioned.fill(
@@ -181,8 +209,7 @@ class _ThirdScreenState extends State<ThirdScreen> {
                           ),
                         ),
 
-                        // Static Preview Badge Overlay
-                        if(_selfieName != null)
+                        // Always Visible Badge Overlay
                         Positioned(
                           left: 14,
                           bottom: 14,
@@ -195,9 +222,13 @@ class _ThirdScreenState extends State<ThirdScreen> {
                               color: const Color(0xEBF5F3EC),
                               borderRadius: BorderRadius.circular(4.0),
                             ),
-                            child: const Text(
-                              'STATIC PREVIEW',
-                              style: TextStyle(
+                            child: Text(
+                              _useAvatarInstead
+                                  ? 'AVATAR MODE'
+                                  : (_selfieName != null
+                                      ? 'PREVIEW'
+                                      : 'NO PHOTO YET'),
+                              style: const TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w600,
                                 letterSpacing: 0.8,
@@ -214,83 +245,90 @@ class _ThirdScreenState extends State<ThirdScreen> {
                 const SizedBox(height: 16),
 
                 // Action Buttons Row: "Take photo" & "Upload photo"
-                Row(
-                  children: [
-                    Expanded(
-                      child: SizedBox(
-                        height: 48,
-                        child: ElevatedButton.icon(
-                          onPressed: _isBusy ? null : () => _pickSelfie(ImageSource.camera),
-                          icon: const Text(
-                            'Take photo',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
+                Opacity(
+                  opacity: _useAvatarInstead ? 0.5 : 1.0,
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: SizedBox(
+                          height: 48,
+                          child: ElevatedButton.icon(
+                            onPressed: isPhotoActionEnabled
+                                ? () => _pickSelfie(ImageSource.camera)
+                                : null,
+                            icon: const Text(
+                              'Take photo',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFFF5F3EC),
+                              ),
+                            ),
+                            label: const Icon(
+                              Icons.camera_alt_outlined,
+                              size: 18,
                               color: Color(0xFFF5F3EC),
                             ),
-                          ),
-                          label: const Icon(
-                            Icons.camera_alt_outlined,
-                            size: 18,
-                            color: Color(0xFFF5F3EC),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF3E3129),
-                            foregroundColor: const Color(0xFFF5F3EC),
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8.0),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF3E3129),
+                              foregroundColor: const Color(0xFFF5F3EC),
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8.0),
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: SizedBox(
-                        height: 48,
-                        child: OutlinedButton(
-                          onPressed: _isBusy ? null : () => _pickSelfie(ImageSource.gallery),
-                          style: OutlinedButton.styleFrom(
-                            backgroundColor: const Color(0xFFEFECE4),
-                            foregroundColor: const Color(0xFF201D19),
-                            side: const BorderSide(
-                              color: Color(0xFFCDC6BA),
-                              width: 1.0,
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: SizedBox(
+                          height: 48,
+                          child: OutlinedButton(
+                            onPressed: isPhotoActionEnabled
+                                ? () => _pickSelfie(ImageSource.gallery)
+                                : null,
+                            style: OutlinedButton.styleFrom(
+                              backgroundColor: const Color(0xFFEFECE4),
+                              foregroundColor: const Color(0xFF201D19),
+                              side: const BorderSide(
+                                color: Color(0xFFCDC6BA),
+                                width: 1.0,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8.0),
+                              ),
+                              elevation: 0,
                             ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8.0),
-                            ),
-                            elevation: 0,
-                          ),
-                          child: const Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Flexible(
-                                child: Text(
-                                  'Upload photo',
-                                  overflow: TextOverflow.ellipsis,
-                                  maxLines: 1,
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                    color: Color(0xFF201D19),
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    'Upload photo',
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 1,
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFF201D19),
+                                    ),
                                   ),
                                 ),
-                              ),
-                              SizedBox(width: 4),
-                              Icon(
-                                Icons.file_upload_outlined,
-                                size: 16,
-                                color: Color(0xFF201D19),
-                              ),
-                            ],
+                                SizedBox(width: 4),
+                                Icon(
+                                  Icons.file_upload_outlined,
+                                  size: 16,
+                                  color: Color(0xFF201D19),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
 
                 const SizedBox(height: 14),
@@ -299,25 +337,30 @@ class _ThirdScreenState extends State<ThirdScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    GestureDetector(
-                      onTap: () => _pickSelfie(ImageSource.camera),
-                      child: const Row(
-                        children: [
-                          Icon(
-                            Icons.refresh_rounded,
-                            size: 16,
-                            color: Color(0xFF201D19),
-                          ),
-                          SizedBox(width: 4),
-                          Text(
-                            'Retake',
-                            style: TextStyle(
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w600,
+                    Opacity(
+                      opacity: _useAvatarInstead ? 0.5 : 1.0,
+                      child: GestureDetector(
+                        onTap: isPhotoActionEnabled
+                            ? () => _pickSelfie(_lastSource)
+                            : null,
+                        child: const Row(
+                          children: [
+                            Icon(
+                              Icons.refresh_rounded,
+                              size: 16,
                               color: Color(0xFF201D19),
                             ),
-                          ),
-                        ],
+                            SizedBox(width: 4),
+                            Text(
+                              'Retake',
+                              style: TextStyle(
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF201D19),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                     const Text(
@@ -344,13 +387,13 @@ class _ThirdScreenState extends State<ThirdScreen> {
 
                 const SizedBox(height: 16),
 
-                // Option Toggle Buttons ("Use photo privately " / "Use avatar instead")
+                // Option Toggle Buttons ("Use photo privately" / "Use avatar instead")
                 Row(
                   children: [
                     GestureDetector(
                       onTap: () {
                         setState(() {
-                          _usePhotoPrivately = true;
+                          _useAvatarInstead = false;
                         });
                       },
                       child: Container(
@@ -359,11 +402,11 @@ class _ThirdScreenState extends State<ThirdScreen> {
                           vertical: 10,
                         ),
                         decoration: BoxDecoration(
-                          color: _usePhotoPrivately
+                          color: !_useAvatarInstead
                               ? const Color(0xFF4C5547)
                               : const Color(0xFFEFECE4),
                           borderRadius: BorderRadius.circular(6.0),
-                          border: _usePhotoPrivately
+                          border: !_useAvatarInstead
                               ? null
                               : Border.all(
                                   color: const Color(0xFFCDC6BA),
@@ -375,7 +418,7 @@ class _ThirdScreenState extends State<ThirdScreen> {
                           style: TextStyle(
                             fontSize: 12.5,
                             fontWeight: FontWeight.w600,
-                            color: _usePhotoPrivately
+                            color: !_useAvatarInstead
                                 ? const Color(0xFFF5F3EC)
                                 : const Color(0xFF201D19),
                           ),
@@ -386,7 +429,7 @@ class _ThirdScreenState extends State<ThirdScreen> {
                     GestureDetector(
                       onTap: () {
                         setState(() {
-                          _usePhotoPrivately = false;
+                          _useAvatarInstead = true;
                         });
                       },
                       child: Container(
@@ -395,11 +438,11 @@ class _ThirdScreenState extends State<ThirdScreen> {
                           vertical: 10,
                         ),
                         decoration: BoxDecoration(
-                          color: !_usePhotoPrivately
+                          color: _useAvatarInstead
                               ? const Color(0xFF4C5547)
                               : const Color(0xFFEFECE4),
                           borderRadius: BorderRadius.circular(6.0),
-                          border: !_usePhotoPrivately
+                          border: _useAvatarInstead
                               ? null
                               : Border.all(
                                   color: const Color(0xFFCDC6BA),
@@ -411,7 +454,7 @@ class _ThirdScreenState extends State<ThirdScreen> {
                           style: TextStyle(
                             fontSize: 12.5,
                             fontWeight: FontWeight.w600,
-                            color: !_usePhotoPrivately
+                            color: _useAvatarInstead
                                 ? const Color(0xFFF5F3EC)
                                 : const Color(0xFF201D19),
                           ),
@@ -423,26 +466,31 @@ class _ThirdScreenState extends State<ThirdScreen> {
 
                 const SizedBox(height: 24),
 
-                // Primary CTA Button: "Continue with this photo"
-                SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: ElevatedButton(
-                    onPressed: _continue,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF3E3129),
-                      foregroundColor: const Color(0xFFF5F3EC),
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10.0),
+                // Primary CTA Button
+                Opacity(
+                  opacity: canContinue ? 1.0 : 0.5,
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: ElevatedButton(
+                      onPressed: _continue,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF3E3129),
+                        foregroundColor: const Color(0xFFF5F3EC),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10.0),
+                        ),
                       ),
-                    ),
-                    child: const Text(
-                      'Continue with this photo',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.2,
+                      child: Text(
+                        _useAvatarInstead
+                            ? 'Continue with an avatar'
+                            : 'Continue with this photo',
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.2,
+                        ),
                       ),
                     ),
                   ),
@@ -464,7 +512,8 @@ class _ThirdScreenState extends State<ThirdScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.person_outline_rounded, size: 48, color: Color(0xFF8C8278)),
+            Icon(Icons.person_outline_rounded,
+                size: 48, color: Color(0xFF8C8278)),
             SizedBox(height: 8),
             Text(
               'Portrait Preview',

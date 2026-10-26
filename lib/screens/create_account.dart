@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
 import '../state/session_state.dart';
-import 'home_screen.dart';
 import 'selfie_capture.dart';
 import 'welcome_screen.dart';
 
@@ -95,25 +94,12 @@ class _SecondScreenState extends State<SecondScreen> {
 
   void _routeAfterAuth() {
     if (!mounted) return;
-    final session = context.read<SessionState>();
-    if (session.hasCompletedOnboarding) {
-      // TODO(nav): existing user with completed onboarding goes to home.
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const EighthScreen(),
-        ),
-        (route) => false,
-      );
-    } else {
-      // TODO(nav): new users continue the onboarding flow.
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const ThirdScreen(),
-        ),
-      );
-    }
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const ThirdScreen(),
+      ),
+    );
   }
 
   Future<void> _submit() async {
