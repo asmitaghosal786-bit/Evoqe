@@ -525,7 +525,7 @@ class _FourthScreenState extends State<FourthScreen> {
 
                 // Main Section Headline
                 const Text(
-                  'Virtual Try-On',
+                  'A Silhouette Of You',
                   style: TextStyle(
                     fontFamily: 'serif',
                     fontSize: 30,

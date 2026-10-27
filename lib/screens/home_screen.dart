@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'welcome_screen.dart';
-import 'digital_style_profile_avatar.dart';
 import 'fashion_try_on.dart';
 import 'jewelry_try_on.dart';
 import 'complete_the_look.dart';
@@ -8,6 +7,7 @@ import 'discover.dart';
 import 'ai_styling_assistant.dart';
 import 'lookbook.dart';
 import 'saved_looks.dart';
+import 'user_profile_settings.dart';
 
 class EighthScreen extends StatefulWidget {
   final int initialTabIndex;
@@ -42,22 +42,9 @@ class _EighthScreenState extends State<EighthScreen> {
   static const String _quietStatementsUrl =
       'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=500&q=80';
 
-  static const String _userAvatarUrl =
-      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80';
-
   // Saved states for suggested items
   bool _isWaistcoatSaved = false;
   bool _isEarringsSaved = false;
-
-  final List<String> _profileMenuItems = const [
-    'My Style Profile',
-    'My Avatar',
-    'Orders and Shopping History',
-    'Privacy and Image Permissions',
-    'Notification Preferences',
-    'Account Settings',
-    'Help and Support',
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -514,214 +501,12 @@ class _EighthScreenState extends State<EighthScreen> {
 
   /// Tab 4: Profile View (Sixth Screen Content)
   Widget _buildProfileContent() {
-    return SingleChildScrollView(
-      physics: const BouncingScrollPhysics(),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 12),
-
-            // Top App Bar Row: Back Arrow | EVOQE Logo | Shopping Bag Icon
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                IconButton(
-                  icon: const Icon(
-                    Icons.arrow_back,
-                    color: Color(0xFF201D19),
-                    size: 25,
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      _selectedBottomNavIndex = 0; // Return to Home tab
-                    });
-                  },
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                ),
-                const EvoqeHeaderLogo(),
-                IconButton(
-                  icon: const Icon(
-                    Icons.shopping_bag_outlined,
-                    color: Color(0xFF201D19),
-                    size: 22,
-                  ),
-                  onPressed: () {},
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 28),
-
-            // Main Title
-            const Text(
-              'Your atelier, your rules.',
-              style: TextStyle(
-                fontFamily: 'serif',
-                fontSize: 32,
-                fontWeight: FontWeight.w400,
-                color: Color(0xFF201D19),
-                letterSpacing: -0.3,
-              ),
-            ),
-
-            const SizedBox(height: 24),
-
-            // User Profile Header Card
-            Row(
-              children: [
-                Container(
-                  width: 72,
-                  height: 72,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8.0),
-                    color: const Color(0xFFE2DDD3),
-                  ),
-                  clipBehavior: Clip.antiAlias,
-                  child: Image.network(
-                    _userAvatarUrl,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Container(
-                      color: const Color(0xFFDDD7CC),
-                      child: const Icon(
-                        Icons.person_outline_rounded,
-                        size: 36,
-                        color: Color(0xFF8C8278),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Ananya Sharma',
-                        style: TextStyle(
-                          fontFamily: 'serif',
-                          fontSize: 22,
-                          fontWeight: FontWeight.w400,
-                          color: Color(0xFF201D19),
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      const Text(
-                        'ananya.sharma@example.com',
-                        style: TextStyle(
-                          fontSize: 12.5,
-                          color: Color(0xFF888077),
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      GestureDetector(
-                        onTap: () {},
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              'Edit account',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                                color: Color(0xFF5A544D),
-                              ),
-                            ),
-                            SizedBox(width: 3),
-                            Icon(
-                              Icons.north_east_rounded,
-                              size: 13,
-                              color: Color(0xFF5A544D),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 28),
-
-            // Menu Options List
-            Column(
-              children: [
-                ..._profileMenuItems.map((title) => Column(
-                  children: [
-                    const Divider(color: Color(0xFFD6CFC4), height: 1, thickness: 1),
-                    InkWell(
-                      onTap: title == 'My Avatar'
-                          ? () => Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const SeventhScreen(),
-                                ),
-                              )
-                          : () {},
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 16.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              title,
-                              style: const TextStyle(
-                                fontSize: 14.5,
-                                fontWeight: FontWeight.w400,
-                                color: Color(0xFF201D19),
-                              ),
-                            ),
-                            const Icon(
-                              Icons.chevron_right_rounded,
-                              size: 20,
-                              color: Color(0xFF201D19),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                )),
-
-                // Log Out Row
-                const Divider(color: Color(0xFFD6CFC4), height: 1, thickness: 1),
-                InkWell(
-                  onTap: () {},
-                  child: const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 16.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Log Out',
-                          style: TextStyle(
-                            fontSize: 14.5,
-                            fontWeight: FontWeight.w400,
-                            color: Color(0xFF201D19),
-                          ),
-                        ),
-                        Icon(
-                          Icons.logout_rounded,
-                          size: 18,
-                          color: Color(0xFF201D19),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const Divider(color: Color(0xFFD6CFC4), height: 1, thickness: 1),
-              ],
-            ),
-
-            const SizedBox(height: 24),
-          ],
-        ),
-      ),
+    return ProfileContentWidget(
+      onBackPressed: () {
+        setState(() {
+          _selectedBottomNavIndex = 0; // Return to Home tab
+        });
+      },
     );
   }
 

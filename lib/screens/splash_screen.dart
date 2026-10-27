@@ -1,6 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../state/session_state.dart';
 import 'welcome_screen.dart';
+import 'home_screen.dart';
+import 'selfie_capture.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -48,13 +52,21 @@ class _SplashScreenState extends State<SplashScreen> {
     _hasNavigated = true;
     _timer?.cancel();
 
-    // TODO: later, if a user session exists, navigate to EighthScreen (home_screen.dart) instead of EvoqeHomeScreen.
+    final session = context.read<SessionState>();
+    Widget nextScreen;
+    if (session.shouldSkipToHome) {
+      nextScreen = const EighthScreen();
+    } else if (session.isLoggedIn && !session.hasCompletedOnboarding) {
+      nextScreen = const ThirdScreen();
+    } else {
+      nextScreen = const EvoqeHomeScreen();
+    }
+
     Navigator.pushReplacement(
       context,
       PageRouteBuilder(
         transitionDuration: const Duration(milliseconds: 400),
-        pageBuilder: (context, animation, secondaryAnimation) =>
-            const EvoqeHomeScreen(),
+        pageBuilder: (context, animation, secondaryAnimation) => nextScreen,
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return FadeTransition(
             opacity: animation,

@@ -28,6 +28,11 @@ class UserProfile {
   Set<String> customBudget;
   Set<String> customAesthetics;
   Set<String> customPalette;
+  bool notifyStyleRecommendations;
+  bool notifyLookbookUpdates;
+  bool notifyDealAlerts;
+  bool notifyWishlistUpdates;
+  bool notifyOrderUpdates;
 
   UserProfile({
     required this.name,
@@ -58,6 +63,11 @@ class UserProfile {
     Set<String>? customBudget,
     Set<String>? customAesthetics,
     Set<String>? customPalette,
+    bool? notifyStyleRecommendations,
+    bool? notifyLookbookUpdates,
+    bool? notifyDealAlerts,
+    bool? notifyWishlistUpdates,
+    bool? notifyOrderUpdates,
   })  : bodyPhotoPaths = bodyPhotoPaths ??
       {
         'front': null,
@@ -78,7 +88,12 @@ class UserProfile {
         customSeason = customSeason ?? {},
         customBudget = customBudget ?? {},
         customAesthetics = customAesthetics ?? {},
-        customPalette = customPalette ?? {};
+        customPalette = customPalette ?? {},
+        notifyStyleRecommendations = notifyStyleRecommendations ?? true,
+        notifyLookbookUpdates = notifyLookbookUpdates ?? true,
+        notifyDealAlerts = notifyDealAlerts ?? true,
+        notifyWishlistUpdates = notifyWishlistUpdates ?? true,
+        notifyOrderUpdates = notifyOrderUpdates ?? true;
 
   /// JSON-safe map (Sets become Lists) for storing in the local database.
   Map<String, dynamic> toJson() => {
@@ -110,6 +125,11 @@ class UserProfile {
     'customBudget': customBudget.toList(),
     'customAesthetics': customAesthetics.toList(),
     'customPalette': customPalette.toList(),
+    'notifyStyleRecommendations': notifyStyleRecommendations,
+    'notifyLookbookUpdates': notifyLookbookUpdates,
+    'notifyDealAlerts': notifyDealAlerts,
+    'notifyWishlistUpdates': notifyWishlistUpdates,
+    'notifyOrderUpdates': notifyOrderUpdates,
   };
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
@@ -160,6 +180,11 @@ class UserProfile {
       customBudget: stringSet('customBudget'),
       customAesthetics: stringSet('customAesthetics'),
       customPalette: stringSet('customPalette'),
+      notifyStyleRecommendations: (json['notifyStyleRecommendations'] as bool?) ?? true,
+      notifyLookbookUpdates: (json['notifyLookbookUpdates'] as bool?) ?? true,
+      notifyDealAlerts: (json['notifyDealAlerts'] as bool?) ?? true,
+      notifyWishlistUpdates: (json['notifyWishlistUpdates'] as bool?) ?? true,
+      notifyOrderUpdates: (json['notifyOrderUpdates'] as bool?) ?? true,
     );
   }
 }

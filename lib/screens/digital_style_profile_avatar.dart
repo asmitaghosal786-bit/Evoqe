@@ -1,14 +1,196 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../state/session_state.dart';
 import 'welcome_screen.dart';
+import 'selfie_capture.dart';
+import 'full_body_capture.dart';
 
-class SeventhScreen extends StatelessWidget {
+class SeventhScreen extends StatefulWidget {
   const SeventhScreen({super.key});
 
+  @override
+  State<SeventhScreen> createState() => _SeventhScreenState();
+}
+
+class _SeventhScreenState extends State<SeventhScreen> {
   // Portrait (close-up) and full-body avatar previews
   static const String _portraitImageUrl =
       'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=500&q=80';
   static const String _fullBodyImageUrl =
       'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=500&q=80';
+
+  void _showEditAvatarBottomSheet(BuildContext context) {
+    final session = context.read<SessionState>();
+    final user = session.currentUser;
+
+    final heightController = TextEditingController(text: user?.heightCm?.toString() ?? '');
+    final weightController = TextEditingController(text: user?.weightKg?.toString() ?? '');
+    final clothingController = TextEditingController(text: user?.clothingSize ?? '');
+    final bustController = TextEditingController(text: user?.bustSize ?? '');
+    final hipController = TextEditingController(text: user?.hipSize ?? '');
+    final shoeController = TextEditingController(text: user?.shoeSize ?? '');
+    int? selectedFitIndex = user?.fitIndex;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFFF5F3EC),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setModalState) => Padding(
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 24,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Edit Avatar Details',
+                  style: TextStyle(
+                    fontFamily: 'serif',
+                    fontSize: 22,
+                    fontWeight: FontWeight.w400,
+                    color: Color(0xFF201D19),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: heightController,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(labelText: 'Height (cm)', filled: true, fillColor: Color(0xFFEFECE4)),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextField(
+                        controller: weightController,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(labelText: 'Weight (kg)', filled: true, fillColor: Color(0xFFEFECE4)),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: clothingController,
+                        decoration: const InputDecoration(labelText: 'Clothing size', filled: true, fillColor: Color(0xFFEFECE4)),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextField(
+                        controller: shoeController,
+                        decoration: const InputDecoration(labelText: 'Shoe size', filled: true, fillColor: Color(0xFFEFECE4)),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: bustController,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(labelText: 'Bust size', filled: true, fillColor: Color(0xFFEFECE4)),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextField(
+                        controller: hipController,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(labelText: 'Hip size', filled: true, fillColor: Color(0xFFEFECE4)),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                const Text('Fit Preference', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Color(0xFF6E6760))),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    _buildFitOption('Relaxed', 0, selectedFitIndex, (i) => setModalState(() => selectedFitIndex = i)),
+                    const SizedBox(width: 8),
+                    _buildFitOption('Tailored', 1, selectedFitIndex, (i) => setModalState(() => selectedFitIndex = i)),
+                    const SizedBox(width: 8),
+                    _buildFitOption('Close-fitting', 2, selectedFitIndex, (i) => setModalState(() => selectedFitIndex = i)),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF3E3129),
+                      foregroundColor: const Color(0xFFF5F3EC),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                    onPressed: () async {
+                      await session.updateProfile((p) {
+                        p.heightCm = double.tryParse(heightController.text.trim());
+                        p.weightKg = double.tryParse(weightController.text.trim());
+                        p.clothingSize = clothingController.text.trim().isEmpty ? null : clothingController.text.trim();
+                        p.bustSize = bustController.text.trim().isEmpty ? null : bustController.text.trim();
+                        p.hipSize = hipController.text.trim().isEmpty ? null : hipController.text.trim();
+                        p.shoeSize = shoeController.text.trim().isEmpty ? null : shoeController.text.trim();
+                        p.fitIndex = selectedFitIndex;
+                      });
+                      if (ctx.mounted) {
+                        Navigator.pop(ctx);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Avatar details updated successfully')),
+                        );
+                      }
+                    },
+                    child: const Text('Save Avatar Details', style: TextStyle(fontWeight: FontWeight.w600)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFitOption(String title, int index, int? selectedIndex, ValueChanged<int?> onTap) {
+    final isSelected = index == selectedIndex;
+    return GestureDetector(
+      onTap: () => onTap(isSelected ? null : index),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF4C5547) : const Color(0xFFEFECE4),
+          borderRadius: BorderRadius.circular(6.0),
+          border: isSelected ? null : Border.all(color: const Color(0xFFCDC6BA)),
+        ),
+        child: Text(
+          title,
+          style: TextStyle(
+            fontSize: 12.5,
+            fontWeight: FontWeight.w600,
+            color: isSelected ? const Color(0xFFF5F3EC) : const Color(0xFF201D19),
+          ),
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -119,10 +301,32 @@ class SeventhScreen extends StatelessWidget {
 
                 const SizedBox(height: 18),
 
-                // Change Uploaded Photos Button
+                // Change Uploaded Photos for Face Button
                 _buildOutlinedActionButton(
-                  label: 'Change Uploaded Photos',
-                  onPressed: () {},
+                  label: 'Change Uploaded Photos for Face',
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ThirdScreen(),
+                      ),
+                    );
+                  },
+                ),
+
+                const SizedBox(height: 14),
+
+                // Change Uploaded Photos for Figure Button
+                _buildOutlinedActionButton(
+                  label: 'Change Uploaded Photos for Figure',
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const FourthScreen(),
+                      ),
+                    );
+                  },
                 ),
 
                 const SizedBox(height: 14),
@@ -130,7 +334,7 @@ class SeventhScreen extends StatelessWidget {
                 // Edit Avatar Details Button
                 _buildOutlinedActionButton(
                   label: 'Edit Avatar Details',
-                  onPressed: () {},
+                  onPressed: () => _showEditAvatarBottomSheet(context),
                 ),
 
                 const SizedBox(height: 22),
