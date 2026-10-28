@@ -1,10 +1,14 @@
-import 'dart:ui';
+import 'dart:ui' show PathMetric;
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:image_picker/image_picker.dart';
+import '../state/session_state.dart';
+import '../models/lookbook_model.dart';
 import 'welcome_screen.dart';
 import 'home_screen.dart';
 import 'discover.dart';
 import 'lookbook_analysis.dart';
-import 'lookbook_results.dart';
 import 'saved_looks.dart';
 
 class FifteenthScreen extends StatefulWidget {
@@ -16,25 +20,152 @@ class FifteenthScreen extends StatefulWidget {
 
 class _FifteenthScreenState extends State<FifteenthScreen> {
   int _selectedBottomNavIndex = 2; // Lookbook tab active
+  late TextEditingController _aestheticController;
 
-  final TextEditingController _aestheticController = TextEditingController(
-    text: 'Quiet luxury meets modern romanticism',
-  );
+  @override
+  void initState() {
+    super.initState();
+    final session = context.read<SessionState>();
+    _aestheticController = TextEditingController(text: session.currentDraft.aestheticDescription);
+    _aestheticController.addListener(_onDescriptionChanged);
+  }
 
-  final List<String> _references = [
-    'Color palette',
-    'Tones- warm, neutral...',
-    'Add Category +',
-  ];
+  void _onDescriptionChanged() {
+    final session = context.read<SessionState>();
+    session.updateDraft((draft) {
+      draft.aestheticDescription = _aestheticController.text;
+    });
+  }
 
   @override
   void dispose() {
+    _aestheticController.removeListener(_onDescriptionChanged);
     _aestheticController.dispose();
     super.dispose();
   }
 
+  Future<void> _pickAndAddImage() async {
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      backgroundColor: const Color(0xFFF5F3EC),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt_outlined),
+              title: const Text('Take photo'),
+              onTap: () => Navigator.pop(ctx, ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined),
+              title: const Text('Choose from gallery'),
+              onTap: () => Navigator.pop(ctx, ImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (source != null) {
+      try {
+        final picker = ImagePicker();
+        final pickedFile = await picker.pickImage(source: source);
+        if (!mounted) return;
+        if (pickedFile != null) {
+          final session = context.read<SessionState>();
+          setState(() {
+            session.updateDraft((draft) {
+              draft.references.add(
+                LookbookReference(
+                  id: DateTime.now().millisecondsSinceEpoch.toString(),
+                  imagePath: pickedFile.path,
+                  label: pickedFile.name.isNotEmpty ? pickedFile.name : 'Reference image',
+                  category: 'General',
+                ),
+              );
+            });
+          });
+        }
+      } catch (_) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Could not load image. Try again.')),
+          );
+        }
+      }
+    }
+  }
+
+  Future<void> _showAddCategoryDialog() async {
+    final controller = TextEditingController();
+    final result = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFFF5F3EC),
+        title: const Text('Add Category', style: TextStyle(fontFamily: 'serif', color: Color(0xFF201D19))),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: InputDecoration(
+            hintText: 'Enter category name',
+            hintStyle: const TextStyle(color: Color(0xFF888077)),
+            filled: true,
+            fillColor: const Color(0xFFEFECE4),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(4.0)),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel', style: TextStyle(color: Color(0xFF888077))),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF3E3129),
+              foregroundColor: const Color(0xFFF5F3EC),
+            ),
+            onPressed: () => Navigator.pop(ctx, controller.text.trim()),
+            child: const Text('Add'),
+          ),
+        ],
+      ),
+    );
+
+    if (!mounted) return;
+    if (result != null && result.isNotEmpty) {
+      final session = context.read<SessionState>();
+      final lower = result.toLowerCase();
+      final existing = session.currentDraft.customCategories.map((c) => c.toLowerCase()).toList();
+      if (!existing.contains(lower)) {
+        setState(() {
+          session.updateDraft((draft) {
+            draft.customCategories.add(result);
+            draft.references.add(
+              LookbookReference(
+                id: DateTime.now().millisecondsSinceEpoch.toString(),
+                imagePath: '',
+                label: result,
+                category: result,
+              ),
+            );
+          });
+        });
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('This category already exists.')),
+          );
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final session = context.watch<SessionState>();
+    final draft = session.currentDraft;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F3EC),
       body: SafeArea(
@@ -51,7 +182,7 @@ class _FifteenthScreenState extends State<FifteenthScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const SizedBox(width: 24), // Left spacer balancing right icon
+                    const SizedBox(width: 24),
                     const EvoqeHeaderLogo(),
                     IconButton(
                       icon: const Icon(
@@ -94,41 +225,44 @@ class _FifteenthScreenState extends State<FifteenthScreen> {
                 const SizedBox(height: 20),
 
                 // Dashed Photo Upload Box
-                CustomPaint(
-                  painter: _DashedRectPainter(),
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 22.0),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFEFECE4),
-                      borderRadius: BorderRadius.circular(4.0),
-                    ),
-                    child: const Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.add_photo_alternate_outlined,
-                          size: 30,
-                          color: Color(0xFF3E3129),
-                        ),
-                        SizedBox(height: 8),
-                        Text(
-                          'Add a photo or inspiration',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: Color(0xFF201D19),
+                GestureDetector(
+                  onTap: _pickAndAddImage,
+                  child: CustomPaint(
+                    painter: _DashedRectPainter(),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 22.0),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEFECE4),
+                        borderRadius: BorderRadius.circular(4.0),
+                      ),
+                      child: const Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.add_photo_alternate_outlined,
+                            size: 30,
+                            color: Color(0xFF3E3129),
                           ),
-                        ),
-                        SizedBox(height: 4),
-                        Text(
-                          'JPG or PNG · optional · private by default',
-                          style: TextStyle(
-                            fontSize: 11.5,
-                            color: Color(0xFF888077),
+                          SizedBox(height: 8),
+                          Text(
+                            'Add a photo or inspiration',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: Color(0xFF201D19),
+                            ),
                           ),
-                        ),
-                      ],
+                          SizedBox(height: 4),
+                          Text(
+                            'JPG or PNG · optional · private by default',
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              color: Color(0xFF888077),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -149,7 +283,7 @@ class _FifteenthScreenState extends State<FifteenthScreen> {
                       ),
                     ),
                     GestureDetector(
-                      onTap: () {},
+                      onTap: _pickAndAddImage,
                       child: const Row(
                         children: [
                           Text(
@@ -174,60 +308,120 @@ class _FifteenthScreenState extends State<FifteenthScreen> {
 
                 const SizedBox(height: 16),
 
-                // Reference Items List
-                Column(
-                  children: List.generate(_references.length, (index) {
-                    final item = _references[index];
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 18.0),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.drag_indicator_rounded,
-                            size: 18,
-                            color: Color(0xFF201D19),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              item,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w400,
-                                color: Color(0xFF201D19),
+                // Reference Items List (Reorderable)
+                draft.references.isEmpty
+                    ? const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 16.0),
+                        child: Text(
+                          'No references added yet. Tap "Add image" above.',
+                          style: TextStyle(fontSize: 13, color: Color(0xFF888077)),
+                        ),
+                      )
+                    : ReorderableListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: draft.references.length,
+                        onReorderItem: (oldIndex, newIndex) {
+                          setState(() {
+                            session.updateDraft((d) {
+                              final item = d.references.removeAt(oldIndex);
+                              d.references.insert(newIndex, item);
+                            });
+                          });
+                        },
+                        itemBuilder: (context, index) {
+                          final ref = draft.references[index];
+                          return KeyedSubtree(
+                            key: ValueKey(ref.id),
+                            child: Padding(
+                              padding: const EdgeInsets.only(bottom: 14.0),
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.drag_indicator_rounded,
+                                    size: 18,
+                                    color: Color(0xFF201D19),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  if (ref.imagePath.isNotEmpty) ...[
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(4),
+                                      child: Image.file(
+                                        File(ref.imagePath),
+                                        width: 32,
+                                        height: 32,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (context, error, stackTrace) => const Icon(Icons.image, size: 32),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                  ],
+                                  Expanded(
+                                    child: Text(
+                                      ref.label,
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w400,
+                                        color: Color(0xFF201D19),
+                                      ),
+                                    ),
+                                  ),
+                                  GestureDetector(
+                                    onTap: _pickAndAddImage,
+                                    child: const Text(
+                                      'Add',
+                                      style: TextStyle(
+                                        fontSize: 12.5,
+                                        fontWeight: FontWeight.w500,
+                                        color: Color(0xFF5A544D),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 14),
+                                  GestureDetector(
+                                    onTap: () {
+                                      setState(() {
+                                        session.updateDraft((d) {
+                                          d.references.removeAt(index);
+                                        });
+                                      });
+                                    },
+                                    child: const Icon(
+                                      Icons.close_rounded,
+                                      size: 18,
+                                      color: Color(0xFF201D19),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                          ),
-                          GestureDetector(
-                            onTap: () {},
-                            child: const Text(
-                              'Add',
-                              style: TextStyle(
-                                fontSize: 12.5,
-                                fontWeight: FontWeight.w500,
-                                color: Color(0xFF5A544D),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 14),
-                          GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                _references.removeAt(index);
-                              });
-                            },
-                            child: const Icon(
-                              Icons.close_rounded,
-                              size: 18,
-                              color: Color(0xFF201D19),
-                            ),
-                          ),
-                        ],
+                          );
+                        },
                       ),
-                    );
-                  }),
+
+                const SizedBox(height: 8),
+
+                // Add Category + Action Button
+                GestureDetector(
+                  onTap: _showAddCategoryDialog,
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.add, size: 16, color: Color(0xFF5A544D)),
+                      SizedBox(width: 4),
+                      Text(
+                        'Add Category +',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: Color(0xFF5A544D),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
 
+                const SizedBox(height: 20),
                 const Divider(
                   color: Color(0xFFD6CFC4),
                   height: 1,
@@ -288,10 +482,17 @@ class _FifteenthScreenState extends State<FifteenthScreen> {
                   height: 50,
                   child: ElevatedButton(
                     onPressed: () {
+                      if (draft.references.isEmpty && draft.aestheticDescription.trim().isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Please add at least one reference or description.')),
+                        );
+                        return;
+                      }
+                      session.saveCurrentDraft();
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const SeventeenthScreen(),
+                          builder: (context) => const SixteenthScreen(),
                         ),
                       );
                     },
@@ -324,6 +525,7 @@ class _FifteenthScreenState extends State<FifteenthScreen> {
                         height: 48,
                         child: OutlinedButton(
                           onPressed: () {
+                            session.saveCurrentDraft();
                             Navigator.push(
                               context,
                               MaterialPageRoute(
@@ -359,7 +561,14 @@ class _FifteenthScreenState extends State<FifteenthScreen> {
                       child: SizedBox(
                         height: 48,
                         child: OutlinedButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const SavedLookbooksScreen(),
+                              ),
+                            );
+                          },
                           style: OutlinedButton.styleFrom(
                             backgroundColor: const Color(0xFFEFECE4),
                             foregroundColor: const Color(0xFF201D19),
@@ -510,6 +719,103 @@ class _FifteenthScreenState extends State<FifteenthScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Saved Lookbooks Screen
+class SavedLookbooksScreen extends StatelessWidget {
+  const SavedLookbooksScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final session = context.watch<SessionState>();
+    final saved = session.savedLookbooks;
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFF5F3EC),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFFF5F3EC),
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Color(0xFF201D19)),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text(
+          'Saved Lookbooks',
+          style: TextStyle(fontFamily: 'serif', color: Color(0xFF201D19), fontSize: 18),
+        ),
+      ),
+      body: SafeArea(
+        child: saved.isEmpty
+            ? const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(24.0),
+                  child: Text(
+                    'No saved lookbooks yet. Generate and save a lookbook to see it here.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 14, color: Color(0xFF888077)),
+                  ),
+                ),
+              )
+            : ListView.builder(
+                padding: const EdgeInsets.all(20),
+                itemCount: saved.length,
+                itemBuilder: (context, index) {
+                  final lookbook = saved[index];
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 14),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEFECE4),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFFCDC6BA)),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                lookbook.aestheticDescription.isNotEmpty
+                                    ? lookbook.aestheticDescription
+                                    : 'Untitled Lookbook',
+                                style: const TextStyle(
+                                  fontFamily: 'serif',
+                                  fontSize: 16,
+                                  color: Color(0xFF201D19),
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                '${lookbook.references.length} references · ${lookbook.customCategories.length} categories',
+                                style: const TextStyle(fontSize: 12, color: Color(0xFF888077)),
+                              ),
+                            ],
+                          ),
+                        ),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF3E3129),
+                            foregroundColor: const Color(0xFFF5F3EC),
+                            elevation: 0,
+                          ),
+                          onPressed: () {
+                            session.loadDraft(lookbook);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const SixteenthScreen()),
+                            );
+                          },
+                          child: const Text('View Board'),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
       ),
     );
   }

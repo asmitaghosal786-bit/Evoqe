@@ -1,24 +1,23 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../state/session_state.dart';
+import '../models/lookbook_model.dart';
 import 'welcome_screen.dart';
 import 'lookbook_results.dart';
 
 class SixteenthScreen extends StatelessWidget {
   const SixteenthScreen({super.key});
 
-  static const String _flatlayImageUrl =
-      'https://images.unsplash.com/photo-1548883354-7622d03aca27?auto=format&fit=crop&w=500&q=80';
-  static const String _modelImageUrl =
-      'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=500&q=80';
-
-  final List<Color> _paletteColors = const [
-    Color(0xFFFAF8F5),
-    Color(0xFFE2DDD3),
-    Color(0xFF3E3129),
-    Color(0xFF555E4E),
-  ];
-
   @override
   Widget build(BuildContext context) {
+    final session = context.watch<SessionState>();
+    final draft = session.currentDraft;
+    final analysis = LookbookAnalyzer.analyze(draft);
+
+    // Get image paths from references if any exist
+    final imageReferences = draft.references.where((r) => r.imagePath.isNotEmpty).toList();
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F3EC),
       body: SafeArea(
@@ -95,7 +94,7 @@ class SixteenthScreen extends StatelessWidget {
 
                 // Subtitle
                 const Text(
-                  'Simulated lookbook analysis',
+                  'Rule-based aesthetic analyzer',
                   style: TextStyle(
                     fontSize: 12,
                     color: Color(0xFF888077),
@@ -104,71 +103,59 @@ class SixteenthScreen extends StatelessWidget {
 
                 const SizedBox(height: 20),
 
-                // Inspiration Grid (2 Images Side-by-Side)
-                Row(
-                  children: [
-                    Expanded(
-                      flex: 6,
-                      child: AspectRatio(
-                        aspectRatio: 1.15,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(4.0),
-                            color: const Color(0xFFE2DDD3),
-                          ),
-                          clipBehavior: Clip.antiAlias,
-                          child: Image.network(
-                            _flatlayImageUrl,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) =>
-                                Container(
-                              color: const Color(0xFFDDD7CC),
-                              child: const Icon(
-                                Icons.image_outlined,
-                                size: 32,
-                                color: Color(0xFF8C8278),
+                // Inspiration Grid (Display reference images or placeholders)
+                if (imageReferences.isNotEmpty) ...[
+                  Row(
+                    children: [
+                      for (int i = 0; i < imageReferences.length && i < 2; i++) ...[
+                        Expanded(
+                          child: AspectRatio(
+                            aspectRatio: 1.15,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(4.0),
+                                color: const Color(0xFFE2DDD3),
+                              ),
+                              clipBehavior: Clip.antiAlias,
+                              child: Image.file(
+                                File(imageReferences[i].imagePath),
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) => Container(
+                                  color: const Color(0xFFDDD7CC),
+                                  child: const Icon(Icons.image, size: 32, color: Color(0xFF8C8278)),
+                                ),
                               ),
                             ),
                           ),
                         ),
+                        if (i == 0 && imageReferences.length > 1) const SizedBox(width: 12),
+                      ],
+                    ],
+                  ),
+                ] else ...[
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEFECE4),
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(color: const Color(0xFFCDC6BA)),
+                    ),
+                    child: const Center(
+                      child: Text(
+                        'No reference images uploaded. Analysis derived from description.',
+                        style: TextStyle(fontSize: 12.5, color: Color(0xFF888077)),
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      flex: 5,
-                      child: AspectRatio(
-                        aspectRatio: 0.9,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(4.0),
-                            color: const Color(0xFFE2DDD3),
-                          ),
-                          clipBehavior: Clip.antiAlias,
-                          child: Image.network(
-                            _modelImageUrl,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) =>
-                                Container(
-                              color: const Color(0xFFDDD7CC),
-                              child: const Icon(
-                                Icons.person_outline_rounded,
-                                size: 32,
-                                color: Color(0xFF8C8278),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
 
                 const SizedBox(height: 24),
 
-                // Curated Aesthetic Title
-                const Text(
-                  'Quiet luxury. A romantic edge.',
-                  style: TextStyle(
+                // Curated Aesthetic Title (Dynamic Headline)
+                Text(
+                  analysis.headline,
+                  style: const TextStyle(
                     fontFamily: 'serif',
                     fontSize: 24,
                     fontWeight: FontWeight.w400,
@@ -178,10 +165,10 @@ class SixteenthScreen extends StatelessWidget {
 
                 const SizedBox(height: 8),
 
-                // Curated Description Paragraph
-                const Text(
-                  'Your references pair precise tailoring with softer textures. Warm neutrals and delicate gold give the edit an understated, personal rhythm.',
-                  style: TextStyle(
+                // Curated Description Paragraph (Dynamic Summary)
+                Text(
+                  analysis.summary,
+                  style: const TextStyle(
                     fontSize: 13.5,
                     color: Color(0xFF6E6760),
                     height: 1.4,
@@ -206,8 +193,8 @@ class SixteenthScreen extends StatelessWidget {
 
                 // Swatches Row
                 Row(
-                  children: List.generate(_paletteColors.length, (index) {
-                    final color = _paletteColors[index];
+                  children: List.generate(analysis.paletteColors.length, (index) {
+                    final color = analysis.paletteColors[index];
                     return Padding(
                       padding: const EdgeInsets.only(right: 14.0),
                       child: Container(
@@ -229,9 +216,9 @@ class SixteenthScreen extends StatelessWidget {
                 const SizedBox(height: 8),
 
                 // Palette Names Subtitle
-                const Text(
-                  'Ivory · taupe · espresso · muted olive',
-                  style: TextStyle(
+                Text(
+                  analysis.paletteName,
+                  style: const TextStyle(
                     fontSize: 12,
                     color: Color(0xFF888077),
                   ),
@@ -243,11 +230,7 @@ class SixteenthScreen extends StatelessWidget {
                 Wrap(
                   spacing: 8.0,
                   runSpacing: 8.0,
-                  children: [
-                    'Modern minimal',
-                    'Soft romantic',
-                    'Quiet luxury',
-                  ].map((tag) {
+                  children: analysis.styleTags.map((tag) {
                     return Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 14,
@@ -316,11 +299,11 @@ class SixteenthScreen extends StatelessWidget {
                         height: 48,
                         child: ElevatedButton(
                           onPressed: () {
+                            session.saveCurrentDraft();
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) =>
-                                    const SeventeenthScreen(),
+                                builder: (context) => const SeventeenthScreen(),
                               ),
                             );
                           },

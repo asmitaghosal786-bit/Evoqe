@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import '../data/local_db/session_store.dart';
 import '../models/user_profile.dart';
+import '../models/lookbook_model.dart';
 import '../services/auth_service.dart';
 
 /// What the UI listens to: who is logged in and where they are in onboarding.
@@ -15,6 +16,76 @@ class SessionState extends ChangeNotifier {
   bool isLoggedIn = false;
   bool hasCompletedOnboarding = false;
   UserProfile? currentUser;
+
+  LookbookModel currentDraft = LookbookModel(
+    id: DateTime.now().millisecondsSinceEpoch.toString(),
+    title: 'My Curated Lookbook',
+    aestheticDescription: 'Quiet luxury meets modern romanticism',
+    references: [
+      LookbookReference(id: '1', imagePath: '', label: 'Color palette', category: 'General'),
+      LookbookReference(id: '2', imagePath: '', label: 'Tones - warm, neutral...', category: 'General'),
+    ],
+    customCategories: [],
+    createdAt: DateTime.now(),
+  );
+
+  List<LookbookModel> savedLookbooks = [];
+
+  void updateDraft(void Function(LookbookModel) update) {
+    update(currentDraft);
+    notifyListeners();
+  }
+
+  void saveCurrentDraft() {
+    final existingIndex = savedLookbooks.indexWhere((l) => l.id == currentDraft.id);
+    if (existingIndex >= 0) {
+      savedLookbooks[existingIndex] = LookbookModel(
+        id: currentDraft.id,
+        title: currentDraft.title,
+        aestheticDescription: currentDraft.aestheticDescription,
+        references: currentDraft.references.map((r) => LookbookReference(id: r.id, imagePath: r.imagePath, label: r.label, category: r.category)).toList(),
+        customCategories: List.from(currentDraft.customCategories),
+        createdAt: currentDraft.createdAt,
+      );
+    } else {
+      savedLookbooks.insert(
+        0,
+        LookbookModel(
+          id: currentDraft.id,
+          title: currentDraft.title,
+          aestheticDescription: currentDraft.aestheticDescription,
+          references: currentDraft.references.map((r) => LookbookReference(id: r.id, imagePath: r.imagePath, label: r.label, category: r.category)).toList(),
+          customCategories: List.from(currentDraft.customCategories),
+          createdAt: currentDraft.createdAt,
+        ),
+      );
+    }
+    notifyListeners();
+  }
+
+  void loadDraft(LookbookModel lookbook) {
+    currentDraft = LookbookModel(
+      id: lookbook.id,
+      title: lookbook.title,
+      aestheticDescription: lookbook.aestheticDescription,
+      references: lookbook.references.map((r) => LookbookReference(id: r.id, imagePath: r.imagePath, label: r.label, category: r.category)).toList(),
+      customCategories: List.from(lookbook.customCategories),
+      createdAt: lookbook.createdAt,
+    );
+    notifyListeners();
+  }
+
+  void createNewDraft() {
+    currentDraft = LookbookModel(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      title: 'My Curated Lookbook',
+      aestheticDescription: '',
+      references: [],
+      customCategories: [],
+      createdAt: DateTime.now(),
+    );
+    notifyListeners();
+  }
 
   /// True when the user can skip straight to the main app home screen.
   bool get shouldSkipToHome => isLoggedIn && hasCompletedOnboarding;
