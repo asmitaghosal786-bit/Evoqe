@@ -9,6 +9,7 @@ import 'welcome_screen.dart';
 import 'home_screen.dart';
 import 'discover.dart';
 import 'lookbook_analysis.dart';
+import 'lookbook_results.dart';
 import 'saved_looks.dart';
 
 class FifteenthScreen extends StatefulWidget {
@@ -44,7 +45,7 @@ class _FifteenthScreenState extends State<FifteenthScreen> {
     super.dispose();
   }
 
-  Future<void> _pickAndAddImage() async {
+  Future<void> _pickAndAddImages() async {
     final source = await showModalBottomSheet<ImageSource>(
       context: context,
       backgroundColor: const Color(0xFFF5F3EC),
@@ -59,7 +60,7 @@ class _FifteenthScreenState extends State<FifteenthScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.photo_library_outlined),
-              title: const Text('Choose from gallery'),
+              title: const Text('Upload photo / Choose from gallery'),
               onTap: () => Navigator.pop(ctx, ImageSource.gallery),
             ),
           ],
@@ -70,27 +71,49 @@ class _FifteenthScreenState extends State<FifteenthScreen> {
     if (source != null) {
       try {
         final picker = ImagePicker();
-        final pickedFile = await picker.pickImage(source: source);
-        if (!mounted) return;
-        if (pickedFile != null) {
-          final session = context.read<SessionState>();
-          setState(() {
-            session.updateDraft((draft) {
-              draft.references.add(
-                LookbookReference(
-                  id: DateTime.now().millisecondsSinceEpoch.toString(),
-                  imagePath: pickedFile.path,
-                  label: pickedFile.name.isNotEmpty ? pickedFile.name : 'Reference image',
-                  category: 'General',
-                ),
-              );
+        if (source == ImageSource.camera) {
+          final pickedFile = await picker.pickImage(source: ImageSource.camera);
+          if (!mounted) return;
+          if (pickedFile != null) {
+            final session = context.read<SessionState>();
+            setState(() {
+              session.updateDraft((draft) {
+                draft.references.add(
+                  LookbookReference(
+                    id: '${DateTime.now().millisecondsSinceEpoch}_${pickedFile.path}',
+                    imagePath: pickedFile.path,
+                    label: pickedFile.name.isNotEmpty ? pickedFile.name : 'Reference image',
+                    category: 'General',
+                  ),
+                );
+              });
             });
-          });
+          }
+        } else {
+          final pickedFiles = await picker.pickMultiImage();
+          if (!mounted) return;
+          if (pickedFiles.isNotEmpty) {
+            final session = context.read<SessionState>();
+            setState(() {
+              session.updateDraft((draft) {
+                for (final file in pickedFiles) {
+                  draft.references.add(
+                    LookbookReference(
+                      id: '${DateTime.now().millisecondsSinceEpoch}_${file.path}',
+                      imagePath: file.path,
+                      label: file.name.isNotEmpty ? file.name : 'Reference image',
+                      category: 'General',
+                    ),
+                  );
+                }
+              });
+            });
+          }
         }
       } catch (_) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Could not load image. Try again.')),
+            const SnackBar(content: Text('Could not load images. Try again.')),
           );
         }
       }
@@ -215,7 +238,7 @@ class _FifteenthScreenState extends State<FifteenthScreen> {
 
                 // Subtitle
                 const Text(
-                  'Upload an image of a detail you love. Curate board.',
+                  'Upload images of details you love. Curate board.',
                   style: TextStyle(
                     fontSize: 13,
                     color: Color(0xFF6E6760),
@@ -224,9 +247,9 @@ class _FifteenthScreenState extends State<FifteenthScreen> {
 
                 const SizedBox(height: 20),
 
-                // Dashed Photo Upload Box
+                // Dashed Photo Upload Box (Prompts with Take Photo or Choose from Gallery)
                 GestureDetector(
-                  onTap: _pickAndAddImage,
+                  onTap: _pickAndAddImages,
                   child: CustomPaint(
                     painter: _DashedRectPainter(),
                     child: Container(
@@ -246,7 +269,7 @@ class _FifteenthScreenState extends State<FifteenthScreen> {
                           ),
                           SizedBox(height: 8),
                           Text(
-                            'Add a photo or inspiration',
+                            'Add photos or inspirations',
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
@@ -255,7 +278,7 @@ class _FifteenthScreenState extends State<FifteenthScreen> {
                           ),
                           SizedBox(height: 4),
                           Text(
-                            'JPG or PNG · optional · private by default',
+                            'Take photo or choose from gallery · private',
                             style: TextStyle(
                               fontSize: 11.5,
                               color: Color(0xFF888077),
@@ -270,40 +293,14 @@ class _FifteenthScreenState extends State<FifteenthScreen> {
                 const SizedBox(height: 28),
 
                 // Section: Your references
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Your references',
-                      style: TextStyle(
-                        fontFamily: 'serif',
-                        fontSize: 24,
-                        fontWeight: FontWeight.w400,
-                        color: Color(0xFF201D19),
-                      ),
-                    ),
-                    GestureDetector(
-                      onTap: _pickAndAddImage,
-                      child: const Row(
-                        children: [
-                          Text(
-                            'Add image',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: Color(0xFF5A544D),
-                            ),
-                          ),
-                          SizedBox(width: 2),
-                          Icon(
-                            Icons.north_east_rounded,
-                            size: 12,
-                            color: Color(0xFF5A544D),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+                const Text(
+                  'Your references',
+                  style: TextStyle(
+                    fontFamily: 'serif',
+                    fontSize: 24,
+                    fontWeight: FontWeight.w400,
+                    color: Color(0xFF201D19),
+                  ),
                 ),
 
                 const SizedBox(height: 16),
@@ -313,7 +310,7 @@ class _FifteenthScreenState extends State<FifteenthScreen> {
                     ? const Padding(
                         padding: EdgeInsets.symmetric(vertical: 16.0),
                         child: Text(
-                          'No references added yet. Tap "Add image" above.',
+                          'No references added yet. Tap the box above to upload photos.',
                           style: TextStyle(fontSize: 13, color: Color(0xFF888077)),
                         ),
                       )
@@ -367,7 +364,7 @@ class _FifteenthScreenState extends State<FifteenthScreen> {
                                     ),
                                   ),
                                   GestureDetector(
-                                    onTap: _pickAndAddImage,
+                                    onTap: _pickAndAddImages,
                                     child: const Text(
                                       'Add',
                                       style: TextStyle(
@@ -476,7 +473,7 @@ class _FifteenthScreenState extends State<FifteenthScreen> {
 
                 const SizedBox(height: 24),
 
-                // Primary CTA: Generate My Lookbook
+                // Primary CTA: Generate My Lookbook (Leads to SeventeenthScreen / Lookbook Results)
                 SizedBox(
                   width: double.infinity,
                   height: 50,
@@ -492,7 +489,7 @@ class _FifteenthScreenState extends State<FifteenthScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const SixteenthScreen(),
+                          builder: (context) => const SeventeenthScreen(),
                         ),
                       );
                     },
@@ -517,7 +514,7 @@ class _FifteenthScreenState extends State<FifteenthScreen> {
 
                 const SizedBox(height: 12),
 
-                // Dual Action Buttons: View Board & View Saved Lookbook
+                // Dual Action Buttons: View Board (Leads to SixteenthScreen) & View Saved Lookbook
                 Row(
                   children: [
                     Expanded(
@@ -809,7 +806,7 @@ class SavedLookbooksScreen extends StatelessWidget {
                               MaterialPageRoute(builder: (_) => const SixteenthScreen()),
                             );
                           },
-                          child: const Text('View Board'),
+                          child: const Text('View Lookbooks'),
                         ),
                       ],
                     ),
@@ -823,6 +820,9 @@ class SavedLookbooksScreen extends StatelessWidget {
 
 /// Custom painter to render the dashed rectangular outline for the photo upload box
 class _DashedRectPainter extends CustomPainter {
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
@@ -852,7 +852,4 @@ class _DashedRectPainter extends CustomPainter {
       }
     }
   }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
