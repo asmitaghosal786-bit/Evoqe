@@ -8,6 +8,8 @@ import 'ai_styling_assistant.dart';
 import 'lookbook.dart';
 import 'saved_looks.dart';
 import 'user_profile_settings.dart';
+import 'live_try_on_flow.dart';
+import 'digital_closet_screen.dart';
 
 class EighthScreen extends StatefulWidget {
   final int initialTabIndex;
@@ -279,6 +281,35 @@ class _EighthScreenState extends State<EighthScreen> {
                   ),
                 ],
               ),
+            ),
+
+            const SizedBox(height: 20),
+
+            // Live Try-On & Digital Closet Feature Cards
+            _buildFeatureCard(
+              title: 'Live Try-On',
+              description: 'Found something you love? See how it looks on you.',
+              ctaLabel: 'Capture an Item',
+              icon: Icons.camera_enhance_outlined,
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const LiveTryOnCaptureScreen()),
+                );
+              },
+            ),
+            const SizedBox(height: 12),
+            _buildFeatureCard(
+              title: 'My Digital Closet',
+              description: 'Your wardrobe, ready for new combinations.',
+              ctaLabel: 'Open My Closet',
+              icon: Icons.checkroom_rounded,
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const DigitalClosetScreen()),
+                );
+              },
             ),
 
             const SizedBox(height: 20),
@@ -624,6 +655,85 @@ class _EighthScreenState extends State<EighthScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildFeatureCard({
+    required String title,
+    required String description,
+    required String ctaLabel,
+    required IconData icon,
+    required VoidCallback onPressed,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEFECE4),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFCDC6BA)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: const Color(0xFF3E3129),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Icon(icon, color: const Color(0xFFF5F3EC), size: 24),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontFamily: 'serif',
+                    fontSize: 18,
+                    fontWeight: FontWeight.w400,
+                    color: Color(0xFF201D19),
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  description,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF6E6760),
+                    height: 1.3,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                GestureDetector(
+                  onTap: onPressed,
+                  child: Row(
+                    children: [
+                      Text(
+                        ctaLabel,
+                        style: const TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF3E3129),
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      const Icon(
+                        Icons.north_east_rounded,
+                        size: 13,
+                        color: Color(0xFF3E3129),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

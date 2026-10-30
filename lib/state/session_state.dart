@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import '../data/local_db/session_store.dart';
 import '../models/user_profile.dart';
 import '../models/lookbook_model.dart';
+import '../models/garment_item.dart';
 import '../services/auth_service.dart';
 
 /// What the UI listens to: who is logged in and where they are in onboarding.
@@ -16,6 +17,61 @@ class SessionState extends ChangeNotifier {
   bool isLoggedIn = false;
   bool hasCompletedOnboarding = false;
   UserProfile? currentUser;
+
+  List<GarmentItem> garments = [
+    GarmentItem(
+      id: 'g1',
+      name: 'Structured linen blazer',
+      imagePath: '',
+      cutoutPath: '',
+      category: 'Outerwear',
+      primaryColor: 'Beige',
+      brand: 'Maison Vale',
+      season: 'Spring / Fall',
+      occasion: 'Smart Casual',
+      isFavorite: true,
+      source: 'digital_closet',
+    ),
+    GarmentItem(
+      id: 'g2',
+      name: 'High-waist tailored trousers',
+      imagePath: '',
+      cutoutPath: '',
+      category: 'Bottoms',
+      primaryColor: 'Espresso',
+      brand: 'Forme Studio',
+      season: 'All Season',
+      occasion: 'Formal',
+      isFavorite: false,
+      source: 'digital_closet',
+    ),
+  ];
+
+  void addGarment(GarmentItem item) {
+    garments.insert(0, item);
+    notifyListeners();
+  }
+
+  void updateGarment(GarmentItem updated) {
+    final index = garments.indexWhere((g) => g.id == updated.id);
+    if (index >= 0) {
+      garments[index] = updated;
+      notifyListeners();
+    }
+  }
+
+  void deleteGarment(String id) {
+    garments.removeWhere((g) => g.id == id);
+    notifyListeners();
+  }
+
+  void toggleFavorite(String id) {
+    final index = garments.indexWhere((g) => g.id == id);
+    if (index >= 0) {
+      garments[index].isFavorite = !garments[index].isFavorite;
+      notifyListeners();
+    }
+  }
 
   LookbookModel currentDraft = LookbookModel(
     id: DateTime.now().millisecondsSinceEpoch.toString(),
