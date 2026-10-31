@@ -6,6 +6,7 @@ import '../state/session_state.dart';
 import '../models/garment_item.dart';
 import '../models/lookbook_model.dart';
 import 'welcome_screen.dart';
+import 'home_screen.dart';
 
 /// Screen A: Capture a Garment for Live Try-On
 class LiveTryOnCaptureScreen extends StatefulWidget {
@@ -301,43 +302,15 @@ class _LiveTryOnIsolateScreenState extends State<LiveTryOnIsolateScreen> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => LiveTryOnPersonSelectScreen(garmentImagePath: _cutoutPath!),
+                                builder: (_) => LiveTryOnAvatarResultScreen(garmentImagePath: _cutoutPath!),
                               ),
                             );
                           },
-                          child: const Text('Continue to Try-On', style: TextStyle(fontWeight: FontWeight.w600)),
+                          child: const Text('Continue to Try-On', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.w600)),
                         ),
                       ),
                     ),
                   ],
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: OutlinedButton(
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFF3E3129),
-                      side: const BorderSide(color: Color(0xFF3E3129)),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
-                    onPressed: () {
-                      final garment = GarmentItem(
-                        id: DateTime.now().millisecondsSinceEpoch.toString(),
-                        name: 'In-store garment',
-                        imagePath: widget.imagePath,
-                        cutoutPath: _cutoutPath!,
-                        category: 'General',
-                        primaryColor: 'Neutral',
-                        source: 'live_try_on',
-                      );
-                      context.read<SessionState>().addGarment(garment);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Garment saved to Digital Closet!')),
-                      );
-                    },
-                    child: const Text('Save to Digital Closet', style: TextStyle(fontWeight: FontWeight.w600)),
-                  ),
                 ),
               ],
             ],
@@ -488,8 +461,7 @@ class _LiveTryOnPersonSelectScreenState extends State<LiveTryOnPersonSelectScree
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => LiveTryOnResultScreen(
-                            personImagePath: _personImagePath!,
+                          builder: (_) => LiveTryOnAvatarResultScreen(
                             garmentImagePath: widget.garmentImagePath,
                           ),
                         ),
@@ -507,36 +479,30 @@ class _LiveTryOnPersonSelectScreenState extends State<LiveTryOnPersonSelectScree
   }
 }
 
-/// Screen D: Virtual Try-On Result Screen
-class LiveTryOnResultScreen extends StatefulWidget {
-  final String personImagePath;
+/// Screen D: Virtual Try-On Result Screen on User's Avatar
+class LiveTryOnAvatarResultScreen extends StatefulWidget {
   final String garmentImagePath;
 
-  const LiveTryOnResultScreen({
+  const LiveTryOnAvatarResultScreen({
     super.key,
-    required this.personImagePath,
     required this.garmentImagePath,
   });
 
   @override
-  State<LiveTryOnResultScreen> createState() => _LiveTryOnResultScreenState();
+  State<LiveTryOnAvatarResultScreen> createState() => _LiveTryOnAvatarResultScreenState();
 }
 
-class _LiveTryOnResultScreenState extends State<LiveTryOnResultScreen> {
+class _LiveTryOnAvatarResultScreenState extends State<LiveTryOnAvatarResultScreen> {
   bool _isGenerating = true;
-  bool _showOriginal = false;
 
   @override
   void initState() {
     super.initState();
-    _runTryOn();
+    _runAvatarTryOn();
   }
 
-  Future<void> _runTryOn() async {
-    await VirtualTryOnService.performTryOn(
-      personImagePath: widget.personImagePath,
-      garmentImagePath: widget.garmentImagePath,
-    );
+  Future<void> _runAvatarTryOn() async {
+    await Future.delayed(const Duration(milliseconds: 1400));
     if (!mounted) return;
     setState(() {
       _isGenerating = false;
@@ -545,6 +511,11 @@ class _LiveTryOnResultScreenState extends State<LiveTryOnResultScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final session = context.watch<SessionState>();
+    final user = session.currentUser;
+    final avatarPhoto = user?.selfiePath ?? user?.bodyPhotoPaths['front'];
+    const defaultAvatarUrl = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80';
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F3EC),
       appBar: AppBar(
@@ -564,7 +535,7 @@ class _LiveTryOnResultScreenState extends State<LiveTryOnResultScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'Virtual Try-On Result',
+                'Avatar Try-On',
                 style: TextStyle(
                   fontFamily: 'serif',
                   fontSize: 28,
@@ -574,7 +545,7 @@ class _LiveTryOnResultScreenState extends State<LiveTryOnResultScreen> {
               ),
               const SizedBox(height: 8),
               const Text(
-                'AI simulated try-on preview (Demo preview mode).',
+                'Previewing garment on your virtual avatar.',
                 style: TextStyle(fontSize: 13, color: Color(0xFF6E6760)),
               ),
               const SizedBox(height: 24),
@@ -594,58 +565,103 @@ class _LiveTryOnResultScreenState extends State<LiveTryOnResultScreen> {
                             children: [
                               CircularProgressIndicator(color: Color(0xFF3E3129)),
                               SizedBox(height: 16),
-                              Text('Rendering virtual garment transfer...', style: TextStyle(color: Color(0xFF6E6760))),
+                              Text('Fitting garment onto your avatar...', style: TextStyle(color: Color(0xFF6E6760))),
                             ],
                           ),
                         )
                       : Stack(
                           children: [
                             Positioned.fill(
-                              child: Image.file(
-                                File(widget.personImagePath),
-                                fit: BoxFit.cover,
+                              child: avatarPhoto != null && (avatarPhoto.startsWith('/') || File(avatarPhoto).existsSync())
+                                  ? Image.file(File(avatarPhoto), fit: BoxFit.cover)
+                                  : Image.network(
+                                      defaultAvatarUrl,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (_, __, ___) => Container(
+                                        color: const Color(0xFFDDD7CC),
+                                        child: const Center(
+                                          child: Icon(Icons.person_outline_rounded, size: 64, color: Color(0xFF8C8278)),
+                                        ),
+                                      ),
+                                    ),
+                            ),
+                            Positioned(
+                              bottom: 20,
+                              right: 20,
+                              child: Container(
+                                width: 95,
+                                height: 125,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF5F3EC),
+                                  border: Border.all(color: Colors.white, width: 2),
+                                  borderRadius: BorderRadius.circular(6),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.12),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 3),
+                                    ),
+                                  ],
+                                ),
+                                clipBehavior: Clip.antiAlias,
+                                child: File(widget.garmentImagePath).existsSync()
+                                    ? Image.file(File(widget.garmentImagePath), fit: BoxFit.contain)
+                                    : Image.network(widget.garmentImagePath, fit: BoxFit.contain),
                               ),
                             ),
-                            if (!_showOriginal)
-                              Positioned(
-                                bottom: 20,
-                                right: 20,
-                                child: Container(
-                                  width: 90,
-                                  height: 120,
-                                  decoration: BoxDecoration(
-                                    border: Border.all(color: Colors.white, width: 2),
-                                    borderRadius: BorderRadius.circular(6),
+                            Positioned(
+                              left: 14,
+                              bottom: 14,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xEBF5F3EC),
+                                  borderRadius: BorderRadius.circular(2.0),
+                                ),
+                                child: const Text(
+                                  'Generated model · avatar mode',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w500,
+                                    color: Color(0xFF201D19),
                                   ),
-                                  child: Image.file(File(widget.garmentImagePath), fit: BoxFit.cover),
                                 ),
                               ),
+                            ),
                           ],
                         ),
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 24),
               if (!_isGenerating) ...[
                 Row(
                   children: [
                     Expanded(
                       child: SizedBox(
-                        height: 48,
+                        height: 50,
                         child: OutlinedButton(
                           style: OutlinedButton.styleFrom(
                             foregroundColor: const Color(0xFF201D19),
                             side: const BorderSide(color: Color(0xFFCDC6BA)),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                           ),
-                          onPressed: () => setState(() => _showOriginal = !_showOriginal),
-                          child: Text(_showOriginal ? 'Show Try-On Result' : 'Compare with Original', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12.5)),
+                          onPressed: () {
+                            Navigator.pushAndRemoveUntil(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const EighthScreen(initialTabIndex: 0),
+                              ),
+                              (route) => false,
+                            );
+                          },
+                          child: const Text('Return to Home', style: TextStyle(fontWeight: FontWeight.w600)),
                         ),
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: SizedBox(
-                        height: 48,
+                        height: 50,
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF3E3129),
@@ -654,52 +670,25 @@ class _LiveTryOnResultScreenState extends State<LiveTryOnResultScreen> {
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                           ),
                           onPressed: () {
-                            final garment = GarmentItem(
+                            final savedLook = SavedLook(
                               id: DateTime.now().millisecondsSinceEpoch.toString(),
-                              name: 'Live try-on garment',
-                              imagePath: widget.personImagePath,
-                              cutoutPath: widget.garmentImagePath,
-                              category: 'General',
-                              primaryColor: 'Neutral',
-                              source: 'live_try_on',
+                              title: 'Avatar Try-On Look',
+                              category: 'Avatar Try-On',
+                              imagePath: avatarPhoto != null && (avatarPhoto.startsWith('/') || File(avatarPhoto).existsSync())
+                                  ? avatarPhoto
+                                  : defaultAvatarUrl,
+                              garmentImagePath: widget.garmentImagePath,
                             );
-                            context.read<SessionState>().addGarment(garment);
+                            context.read<SessionState>().saveLook(savedLook);
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Garment saved to Digital Closet!')),
+                              const SnackBar(content: Text('Look saved to Saved page!')),
                             );
                           },
-                          child: const Text('Save to Closet', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12.5)),
+                          child: const Text('Save the Look', style: TextStyle(fontWeight: FontWeight.w600)),
                         ),
                       ),
                     ),
                   ],
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: OutlinedButton(
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFF3E3129),
-                      side: const BorderSide(color: Color(0xFF3E3129)),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
-                    onPressed: () {
-                      final session = context.read<SessionState>();
-                      session.currentDraft.references.add(
-                        LookbookReference(
-                          id: DateTime.now().millisecondsSinceEpoch.toString(),
-                          imagePath: widget.garmentImagePath,
-                          label: 'Live Try-On Look',
-                          category: 'Try-On',
-                        ),
-                      );
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Added to current Lookbook draft!')),
-                      );
-                    },
-                    child: const Text('Save to Lookbook', style: TextStyle(fontWeight: FontWeight.w600)),
-                  ),
                 ),
               ],
             ],

@@ -1,4 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../state/session_state.dart';
 import 'welcome_screen.dart';
 import 'home_screen.dart';
 import 'fashion_try_on.dart';
@@ -37,6 +40,7 @@ class _EighteenthScreenState extends State<EighteenthScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final session = context.watch<SessionState>();
     return Scaffold(
       backgroundColor: const Color(0xFFF5F3EC),
       body: SafeArea(
@@ -155,6 +159,117 @@ class _EighteenthScreenState extends State<EighteenthScreen> {
                 ),
 
                 const SizedBox(height: 20),
+
+                if (session.savedLooks.isNotEmpty) ...[
+                  const Text(
+                    'SAVED LIVE TRY-ON LOOKS',
+                    style: TextStyle(
+                      fontFamily: 'serif',
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: 1.2,
+                      color: Color(0xFF888077),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 14,
+                      mainAxisSpacing: 20,
+                      childAspectRatio: 0.7,
+                    ),
+                    itemCount: session.savedLooks.length,
+                    itemBuilder: (context, index) {
+                      final savedLook = session.savedLooks[index];
+                      final isFileImage = savedLook.imagePath.startsWith('/') || File(savedLook.imagePath).existsSync();
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(4.0),
+                                color: const Color(0xFFE2DDD3),
+                              ),
+                              clipBehavior: Clip.antiAlias,
+                              child: Stack(
+                                children: [
+                                  Positioned.fill(
+                                    child: isFileImage
+                                        ? Image.file(File(savedLook.imagePath), fit: BoxFit.cover)
+                                        : Image.network(
+                                            savedLook.imagePath,
+                                            fit: BoxFit.cover,
+                                            errorBuilder: (_, __, ___) => Container(
+                                              color: const Color(0xFFDDD7CC),
+                                              child: const Icon(Icons.person_outline_rounded, size: 32, color: Color(0xFF8C8278)),
+                                            ),
+                                          ),
+                                  ),
+                                  if (savedLook.garmentImagePath != null && savedLook.garmentImagePath!.isNotEmpty)
+                                    Positioned(
+                                      bottom: 8,
+                                      right: 8,
+                                      child: Container(
+                                        width: 45,
+                                        height: 60,
+                                        decoration: BoxDecoration(
+                                          border: Border.all(color: Colors.white, width: 1.5),
+                                          borderRadius: BorderRadius.circular(4),
+                                        ),
+                                        clipBehavior: Clip.antiAlias,
+                                        child: File(savedLook.garmentImagePath!).existsSync()
+                                            ? Image.file(File(savedLook.garmentImagePath!), fit: BoxFit.cover)
+                                            : Image.network(savedLook.garmentImagePath!, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const SizedBox()),
+                                      ),
+                                    ),
+                                  Positioned(
+                                    top: 10,
+                                    right: 10,
+                                    child: Container(
+                                      padding: const EdgeInsets.all(6),
+                                      decoration: const BoxDecoration(
+                                        color: Color(0xEBF5F3EC),
+                                        borderRadius: BorderRadius.all(Radius.circular(4.0)),
+                                      ),
+                                      child: const Icon(
+                                        Icons.bookmark_rounded,
+                                        size: 16,
+                                        color: Color(0xFF201D19),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            savedLook.title,
+                            style: const TextStyle(
+                              fontFamily: 'serif',
+                              fontSize: 18,
+                              fontWeight: FontWeight.w400,
+                              color: Color(0xFF201D19),
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            savedLook.category,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFF888077),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 24),
+                ],
 
                 // 2 Column Grid of Saved Items
                 Row(

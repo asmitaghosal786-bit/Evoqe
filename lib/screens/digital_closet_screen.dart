@@ -700,7 +700,7 @@ class _GarmentEditDetailsScreenState extends State<GarmentEditDetailsScreen> {
                       MaterialPageRoute(builder: (_) => const DigitalClosetScreen()),
                     );
                   },
-                  child: const Text('Save to Digital Closet', style: TextStyle(fontWeight: FontWeight.w600)),
+                  child: const Text('Save Look', style: TextStyle(fontWeight: FontWeight.w600)),
                 ),
               ),
             ],

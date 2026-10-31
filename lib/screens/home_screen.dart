@@ -32,9 +32,7 @@ class _EighthScreenState extends State<EighthScreen> {
     _selectedBottomNavIndex = widget.initialTabIndex;
   }
 
-  // High quality Unsplash URLs matching the design screenshot
-  static const String _heroImageUrl =
-      'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=800&q=80';
+
   static const String _waistcoatImageUrl =
       'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?auto=format&fit=crop&w=500&q=80';
   static const String _earringsImageUrl =
@@ -138,20 +136,11 @@ class _EighthScreenState extends State<EighthScreen> {
           children: [
             const SizedBox(height: 12),
 
-            // Top App Bar Row: Hamburger Menu | EVOQE Logo | Shopping Bag Icon
+            // Top App Bar Row: EVOQE Logo | Shopping Bag Icon
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                IconButton(
-                  icon: const Icon(
-                    Icons.menu_rounded,
-                    color: Color(0xFF201D19),
-                    size: 24,
-                  ),
-                  onPressed: () {},
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                ),
+                const SizedBox(width: 24),
                 const EvoqeHeaderLogo(),
                 IconButton(
                   icon: const Icon(
@@ -166,35 +155,22 @@ class _EighthScreenState extends State<EighthScreen> {
               ],
             ),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
 
-            // Eyebrow Greeting Label
-            const Text(
-              'GOOD AFTERNOON, ANANYA',
-              style: TextStyle(
-                fontFamily: 'serif',
-                fontSize: 10.5,
-                fontWeight: FontWeight.w500,
-                letterSpacing: 1.2,
-                color: Color(0xFF888077),
-              ),
-            ),
-
-            const SizedBox(height: 6),
 
             // Headline
             const Text(
               'Welcome to your atelier.',
               style: TextStyle(
                 fontFamily: 'serif',
-                fontSize: 30,
+                fontSize: 26,
                 fontWeight: FontWeight.w400,
                 color: Color(0xFF201D19),
                 letterSpacing: -0.3,
               ),
             ),
 
-            const SizedBox(height: 6),
+            const SizedBox(height: 4),
 
             // Subtitle
             const Text(
@@ -206,84 +182,7 @@ class _EighthScreenState extends State<EighthScreen> {
               ),
             ),
 
-            const SizedBox(height: 20),
-
-            // Hero Banner Card: Daily Edit
-            Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(4.0),
-                color: const Color(0xFFE2DDD3),
-              ),
-              clipBehavior: Clip.antiAlias,
-              child: Column(
-                children: [
-                  AspectRatio(
-                    aspectRatio: 1.2,
-                    child: Image.network(
-                      _heroImageUrl,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) =>
-                          Container(
-                        color: const Color(0xFFDDD7CC),
-                        child: const Center(
-                          child: Icon(
-                            Icons.person_outline_rounded,
-                            size: 40,
-                            color: Color(0xFF8C8278),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  Container(
-                    width: double.infinity,
-                    color: const Color(0xFF3E3129),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 18.0,
-                      vertical: 8.0,
-                    ),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'ADVERTISEMENT',
-                              style: TextStyle(
-                                fontFamily: 'serif',
-                                fontSize: 24,
-                                fontWeight: FontWeight.w400,
-                                color: Color(0xFFF5F3EC),
-                              ),
-                            ),
-                            SizedBox(height: 2),
-                            Text(
-                              'BEST SALES AND DISCOUNTS',
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w500,
-                                letterSpacing: 1.0,
-                                color: Color(0xFFC6BFB4),
-                              ),
-                            ),
-                          ],
-                        ),
-                        Icon(
-                          Icons.north_east_rounded,
-                          color: Color(0xFFF5F3EC),
-                          size: 20,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 20),
+            const SizedBox(height: 12),
 
             // Live Try-On & Digital Closet Feature Cards
             _buildFeatureCard(
@@ -312,14 +211,16 @@ class _EighthScreenState extends State<EighthScreen> {
               },
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 12),
 
-            // Quick Action Buttons
+            // Quick Action Buttons (Feature Cards)
             Column(
               children: [
-                _buildQuickActionButton(
+                _buildFeatureCard(
+                  title: 'Coordinate The Look',
+                  description: 'Coordinate outfits based on your saved pieces.',
+                  ctaLabel: 'Open Coordinate',
                   icon: Icons.auto_awesome,
-                  label: 'Coordinate The Look Based On Saved Pieces',
                   onPressed: () {
                     Navigator.push(
                       context,
@@ -329,10 +230,12 @@ class _EighthScreenState extends State<EighthScreen> {
                     );
                   },
                 ),
-                const SizedBox(height: 10),
-                _buildQuickActionButton(
+                const SizedBox(height: 12),
+                _buildFeatureCard(
+                  title: 'AI Style Assistant',
+                  description: 'Ask your personal AI stylist for outfit advice.',
+                  ctaLabel: 'Start Chat',
                   icon: Icons.smart_toy_outlined,
-                  label: 'Ask AI Style Assistant',
                   onPressed: () {
                     Navigator.push(
                       context,
@@ -553,16 +456,7 @@ class _EighthScreenState extends State<EighthScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                IconButton(
-                  icon: const Icon(
-                    Icons.menu_rounded,
-                    color: Color(0xFF201D19),
-                    size: 24,
-                  ),
-                  onPressed: () {},
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                ),
+                const SizedBox(width: 24),
                 const EvoqeHeaderLogo(),
                 IconButton(
                   icon: const Icon(
@@ -608,56 +502,7 @@ class _EighthScreenState extends State<EighthScreen> {
     );
   }
 
-  Widget _buildQuickActionButton({
-    required IconData icon,
-    required String label,
-    required VoidCallback onPressed,
-  }) {
-    return Container(
-      height: 48,
-      decoration: BoxDecoration(
-        color: const Color(0xFFEFECE4),
-        borderRadius: BorderRadius.circular(4.0),
-        border: Border.all(
-          color: const Color(0xFFCDC6BA),
-          width: 0.8,
-        ),
-      ),
-      child: InkWell(
-        onTap: onPressed,
-        borderRadius: BorderRadius.circular(4.0),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10.0),
-          child: Row(
-            children: [
-              Icon(
-                icon,
-                size: 18,
-                color: const Color(0xFF201D19),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  label,
-                  style: const TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w500,
-                    color: Color(0xFF201D19),
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              const Icon(
-                Icons.north_east_rounded,
-                size: 13,
-                color: Color(0xFF201D19),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+
 
   Widget _buildFeatureCard({
     required String title,

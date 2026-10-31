@@ -6,6 +6,24 @@ import '../models/lookbook_model.dart';
 import '../models/garment_item.dart';
 import '../services/auth_service.dart';
 
+class SavedLook {
+  final String id;
+  final String title;
+  final String category;
+  final String imagePath;
+  final String? garmentImagePath;
+  final DateTime createdAt;
+
+  SavedLook({
+    required this.id,
+    required this.title,
+    required this.category,
+    required this.imagePath,
+    this.garmentImagePath,
+    DateTime? createdAt,
+  }) : createdAt = createdAt ?? DateTime.now();
+}
+
 /// What the UI listens to: who is logged in and where they are in onboarding.
 class SessionState extends ChangeNotifier {
   SessionState(this._auth, this._store);
@@ -86,6 +104,12 @@ class SessionState extends ChangeNotifier {
   );
 
   List<LookbookModel> savedLookbooks = [];
+  List<SavedLook> savedLooks = [];
+
+  void saveLook(SavedLook look) {
+    savedLooks.insert(0, look);
+    notifyListeners();
+  }
 
   void updateDraft(void Function(LookbookModel) update) {
     update(currentDraft);
