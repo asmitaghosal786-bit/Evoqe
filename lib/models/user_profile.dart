@@ -6,15 +6,6 @@ class UserProfile {
   bool useAvatarInsteadOfPhoto;
   String? gender;
   Map<String, String?> bodyPhotoPaths;
-  double? heightCm;
-  double? weightKg;
-  String? clothingSize;
-  String? bustSize;
-  String? hipSize;
-  String? shoeSize;
-  int? skinToneIndex;
-  int? undertoneIndex;
-  int? fitIndex;
   Set<String> wardrobe;
   Set<String> beauty;
   Set<String> jewelry;
@@ -42,15 +33,6 @@ class UserProfile {
     this.useAvatarInsteadOfPhoto = false,
     this.gender,
     Map<String, String?>? bodyPhotoPaths,
-    this.heightCm,
-    this.weightKg,
-    this.clothingSize,
-    this.bustSize,
-    this.hipSize,
-    this.shoeSize,
-    this.skinToneIndex,
-    this.undertoneIndex,
-    this.fitIndex,
     Set<String>? wardrobe,
     Set<String>? beauty,
     Set<String>? jewelry,
@@ -105,15 +87,6 @@ class UserProfile {
     'useAvatarInsteadOfPhoto': useAvatarInsteadOfPhoto,
     'gender': gender,
     'bodyPhotoPaths': bodyPhotoPaths,
-    'heightCm': heightCm,
-    'weightKg': weightKg,
-    'clothingSize': clothingSize,
-    'bustSize': bustSize,
-    'hipSize': hipSize,
-    'shoeSize': shoeSize,
-    'skinToneIndex': skinToneIndex,
-    'undertoneIndex': undertoneIndex,
-    'fitIndex': fitIndex,
     'wardrobe': wardrobe.toList(),
     'beauty': beauty.toList(),
     'jewelry': jewelry.toList(),
@@ -160,16 +133,6 @@ class UserProfile {
       (json['useAvatarInsteadOfPhoto'] as bool?) ?? false,
       gender: json['gender'] as String?,
       bodyPhotoPaths: photos,
-      // num -> double, because JSON may give back an int (e.g. 170 not 170.0)
-      heightCm: (json['heightCm'] as num?)?.toDouble(),
-      weightKg: (json['weightKg'] as num?)?.toDouble(),
-      clothingSize: json['clothingSize'] as String?,
-      bustSize: json['bustSize'] as String?,
-      hipSize: json['hipSize'] as String?,
-      shoeSize: json['shoeSize'] as String?,
-      skinToneIndex: json['skinToneIndex'] as int?,
-      undertoneIndex: json['undertoneIndex'] as int?,
-      fitIndex: json['fitIndex'] as int?,
       wardrobe: stringSet('wardrobe'),
       beauty: stringSet('beauty'),
       jewelry: stringSet('jewelry'),
