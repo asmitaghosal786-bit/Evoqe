@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import '../state/session_state.dart';
 import '../models/garment_item.dart';
-import '../models/lookbook_model.dart';
 import 'welcome_screen.dart';
 import 'home_screen.dart';
 
@@ -577,7 +576,7 @@ class _LiveTryOnAvatarResultScreenState extends State<LiveTryOnAvatarResultScree
                                   : Image.network(
                                       defaultAvatarUrl,
                                       fit: BoxFit.cover,
-                                      errorBuilder: (_, __, ___) => Container(
+                                      errorBuilder: (context, error, trace) => Container(
                                         color: const Color(0xFFDDD7CC),
                                         child: const Center(
                                           child: Icon(Icons.person_outline_rounded, size: 64, color: Color(0xFF8C8278)),
@@ -597,7 +596,7 @@ class _LiveTryOnAvatarResultScreenState extends State<LiveTryOnAvatarResultScree
                                   borderRadius: BorderRadius.circular(6),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black.withOpacity(0.12),
+                                      color: Colors.black.withValues(alpha: 0.12),
                                       blurRadius: 8,
                                       offset: const Offset(0, 3),
                                     ),

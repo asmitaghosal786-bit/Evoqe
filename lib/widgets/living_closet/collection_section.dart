@@ -583,7 +583,7 @@ class _CollectionSectionState extends State<CollectionSection> {
       rawImage = Image.network(
         imagePath,
         fit: BoxFit.contain,
-        errorBuilder: (_, __, ___) => const Center(
+        errorBuilder: (context, error, trace) => const Center(
           child: Icon(Icons.checkroom, size: 36, color: Color(0xFF8C8278)),
         ),
       );
@@ -591,7 +591,7 @@ class _CollectionSectionState extends State<CollectionSection> {
       rawImage = Image.file(
         File(imagePath),
         fit: BoxFit.contain,
-        errorBuilder: (_, __, ___) => const Center(
+        errorBuilder: (context, error, trace) => const Center(
           child: Icon(Icons.checkroom, size: 36, color: Color(0xFF8C8278)),
         ),
       );

@@ -15,7 +15,7 @@ class StyleStudioSection extends StatefulWidget {
 class _StyleStudioSectionState extends State<StyleStudioSection> {
   final List<CanvasPosition> _selectedPositions = [];
   String? _activeGarmentId;
-  String _outfitName = 'My Editorial Fit';
+  final String _outfitName = 'My Editorial Fit';
   String _selectedOccasion = 'Smart Casual';
 
   final List<String> _occasions = [
@@ -506,34 +506,16 @@ class _StyleStudioSectionState extends State<StyleStudioSection> {
 
   Widget _buildGarmentImage(GarmentItem garment) {
     final path = garment.cutoutPath.isNotEmpty ? garment.cutoutPath : garment.imagePath;
-    Widget rawImage;
     if (path.startsWith('http://') || path.startsWith('https://')) {
-      rawImage = Image.network(path, fit: BoxFit.contain, errorBuilder: (_, __, ___) => const Icon(Icons.checkroom, size: 24));
+      return Image.network(path, fit: BoxFit.contain, errorBuilder: (context, error, trace) => const Icon(Icons.checkroom, size: 24));
     } else if (path.isNotEmpty && File(path).existsSync()) {
-      rawImage = Image.file(File(path), fit: BoxFit.contain, errorBuilder: (_, __, ___) => const Icon(Icons.checkroom, size: 24));
+      return Image.file(File(path), fit: BoxFit.contain, errorBuilder: (context, error, trace) => const Icon(Icons.checkroom, size: 24));
     } else {
-      rawImage = Container(
+      return Container(
         color: const Color(0xFFE2DDD3),
         child: const Icon(Icons.checkroom, size: 24, color: Color(0xFF8C8278)),
       );
     }
-
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFAF8F6F0),
-        borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: Colors.white, width: 1),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x15201D19),
-            blurRadius: 4,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(2.0),
-      child: rawImage,
-    );
   }
 }
 
@@ -541,7 +523,7 @@ class _StudioGridPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = const Color(0xFFCDC6BA).withOpacity(0.3)
+      ..color = const Color(0xFFCDC6BA).withValues(alpha: 0.3)
       ..strokeWidth = 0.5;
 
     const double step = 24.0;

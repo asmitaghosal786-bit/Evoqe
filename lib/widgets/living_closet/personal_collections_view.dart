@@ -73,7 +73,8 @@ class _PersonalCollectionsScreenState extends State<PersonalCollectionsScreen> {
       ),
     );
 
-    if (result == true && mounted) {
+    if (!mounted) return;
+    if (result == true) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Personal collection created.')),
       );
@@ -308,9 +309,9 @@ class _PersonalCollectionsScreenState extends State<PersonalCollectionsScreen> {
   Widget _buildGarmentImage(GarmentItem garment) {
     final path = garment.cutoutPath.isNotEmpty ? garment.cutoutPath : garment.imagePath;
     if (path.startsWith('http://') || path.startsWith('https://')) {
-      return Image.network(path, fit: BoxFit.contain, errorBuilder: (_, __, ___) => const Icon(Icons.checkroom, size: 20));
+      return Image.network(path, fit: BoxFit.contain, errorBuilder: (context, error, trace) => const Icon(Icons.checkroom, size: 20));
     } else if (path.isNotEmpty && File(path).existsSync()) {
-      return Image.file(File(path), fit: BoxFit.contain, errorBuilder: (_, __, ___) => const Icon(Icons.checkroom, size: 20));
+      return Image.file(File(path), fit: BoxFit.contain, errorBuilder: (context, error, trace) => const Icon(Icons.checkroom, size: 20));
     } else {
       return Container(
         color: const Color(0xFFE2DDD3),

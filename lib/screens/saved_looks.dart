@@ -203,7 +203,7 @@ class _EighteenthScreenState extends State<EighteenthScreen> {
                                         : Image.network(
                                             savedLook.imagePath,
                                             fit: BoxFit.cover,
-                                            errorBuilder: (_, __, ___) => Container(
+                                            errorBuilder: (context, error, trace) => Container(
                                               color: const Color(0xFFDDD7CC),
                                               child: const Icon(Icons.person_outline_rounded, size: 32, color: Color(0xFF8C8278)),
                                             ),
@@ -223,7 +223,7 @@ class _EighteenthScreenState extends State<EighteenthScreen> {
                                         clipBehavior: Clip.antiAlias,
                                         child: File(savedLook.garmentImagePath!).existsSync()
                                             ? Image.file(File(savedLook.garmentImagePath!), fit: BoxFit.cover)
-                                            : Image.network(savedLook.garmentImagePath!, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const SizedBox()),
+                                            : Image.network(savedLook.garmentImagePath!, fit: BoxFit.cover, errorBuilder: (context, error, trace) => const SizedBox()),
                                       ),
                                     ),
                                   Positioned(

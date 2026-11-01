@@ -43,20 +43,6 @@ class _OutfitDnaSectionState extends State<OutfitDnaSection> {
       orElse: () => allGarments.first,
     );
 
-    // Complementary wardrobe items
-    final complementaryItems = allGarments.where((g) {
-      if (g.id == selectedGarment.id) return false;
-      final categoryDiffers = g.category != selectedGarment.category;
-      final colorMatches = g.primaryColor == selectedGarment.primaryColor ||
-          g.primaryColor == 'Neutral' ||
-          g.primaryColor == 'Black' ||
-          g.primaryColor == 'Beige' ||
-          g.primaryColor == 'White' ||
-          selectedGarment.primaryColor == 'Neutral' ||
-          selectedGarment.primaryColor == 'Beige';
-      return categoryDiffers && colorMatches;
-    }).toList();
-
     // Auto-generated outfit concepts by style direction
     final outfitConcepts = _generateOutfitConcepts(selectedGarment, allGarments);
 
@@ -331,76 +317,93 @@ class _OutfitDnaSectionState extends State<OutfitDnaSection> {
         const SizedBox(height: 24),
 
         // 02 / COMPLEMENTARY PAIRINGS STRIP
-        if (complementaryItems.isNotEmpty) ...[
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                '02 · HARMONIOUS PAIRING PIECES',
-                style: TextStyle(
-                  fontFamily: 'serif',
-                  fontSize: 10,
-                  letterSpacing: 1.2,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF888077),
+        Builder(
+          builder: (context) {
+            final List<GarmentItem> complementaryItems = allGarments.where((g) {
+              if (g.id == selectedGarment.id) return false;
+              final categoryDiffers = g.category != selectedGarment.category;
+              final colorMatches = g.primaryColor == selectedGarment.primaryColor ||
+                  g.primaryColor == 'Neutral' ||
+                  g.primaryColor == 'Black' ||
+                  g.primaryColor == 'Beige' ||
+                  g.primaryColor == 'White' ||
+                  selectedGarment.primaryColor == 'Neutral' ||
+                  selectedGarment.primaryColor == 'Beige';
+              return categoryDiffers && colorMatches;
+            }).toList();
+
+            if (complementaryItems.isEmpty) return const SizedBox.shrink();
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  '02 · HARMONIOUS PAIRING PIECES',
+                  style: TextStyle(
+                    fontFamily: 'serif',
+                    fontSize: 10,
+                    letterSpacing: 1.2,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF888077),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 4),
-              const Text(
-                'Matching garments from your closet with color and silhouette synergy:',
-                style: TextStyle(fontSize: 12, color: Color(0xFF6E6760)),
-              ),
-              const SizedBox(height: 10),
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                physics: const BouncingScrollPhysics(),
-                child: Row(
-                  children: complementaryItems.map((item) {
-                    return Container(
-                      margin: const EdgeInsets.only(right: 10),
-                      padding: const EdgeInsets.all(8),
-                      width: 105,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFEFECE4),
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: const Color(0xFFCDC6BA)),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          SizedBox(
-                            height: 65,
-                            width: double.infinity,
-                            child: _buildGarmentImage(item),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            item.name,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontFamily: 'serif',
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w500,
-                              color: Color(0xFF201D19),
+                const SizedBox(height: 4),
+                const Text(
+                  'Matching garments from your closet with color and silhouette synergy:',
+                  style: TextStyle(fontSize: 12, color: Color(0xFF6E6760)),
+                ),
+                const SizedBox(height: 10),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  child: Row(
+                    children: complementaryItems.map((item) {
+                      return Container(
+                        margin: const EdgeInsets.only(right: 10),
+                        padding: const EdgeInsets.all(8),
+                        width: 105,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEFECE4),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: const Color(0xFFCDC6BA)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SizedBox(
+                              height: 65,
+                              width: double.infinity,
+                              child: _buildGarmentImage(item),
                             ),
-                          ),
-                          Text(
-                            '${item.category} · ${item.primaryColor}',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 9.5, color: Color(0xFF888077)),
-                          ),
-                        ],
-                      ),
-                    );
-                  }).toList(),
+                            const SizedBox(height: 6),
+                            Text(
+                              item.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontFamily: 'serif',
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w500,
+                                color: Color(0xFF201D19),
+                              ),
+                            ),
+                            Text(
+                              '${item.category} · ${item.primaryColor}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontSize: 9.5, color: Color(0xFF888077)),
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                  ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-        ],
+                const SizedBox(height: 24),
+              ],
+            );
+          },
+        ),
 
         // 03 / GENERATED OUTFIT CONCEPTS SPREAD
         Column(
@@ -668,9 +671,9 @@ class _OutfitDnaSectionState extends State<OutfitDnaSection> {
     final path = garment.cutoutPath.isNotEmpty ? garment.cutoutPath : garment.imagePath;
     Widget rawImage;
     if (path.startsWith('http://') || path.startsWith('https://')) {
-      rawImage = Image.network(path, fit: BoxFit.contain, errorBuilder: (_, __, ___) => const Icon(Icons.checkroom, size: 24));
+      rawImage = Image.network(path, fit: BoxFit.contain, errorBuilder: (context, error, trace) => const Icon(Icons.checkroom, size: 24));
     } else if (path.isNotEmpty && File(path).existsSync()) {
-      rawImage = Image.file(File(path), fit: BoxFit.contain, errorBuilder: (_, __, ___) => const Icon(Icons.checkroom, size: 24));
+      rawImage = Image.file(File(path), fit: BoxFit.contain, errorBuilder: (context, error, trace) => const Icon(Icons.checkroom, size: 24));
     } else {
       rawImage = Container(
         color: const Color(0xFFE2DDD3),

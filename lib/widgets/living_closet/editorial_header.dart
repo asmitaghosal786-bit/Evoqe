@@ -97,7 +97,7 @@ class LivingClosetEditorialHeader extends StatelessWidget {
                       boxShadow: isSelected
                           ? [
                               BoxShadow(
-                                color: const Color(0xFF3E3129).withOpacity(0.15),
+                                color: const Color(0xFF3E3129).withValues(alpha: 0.15),
                                 blurRadius: 6,
                                 offset: const Offset(0, 3),
                               )

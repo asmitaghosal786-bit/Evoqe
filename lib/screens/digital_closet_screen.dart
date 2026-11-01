@@ -467,7 +467,7 @@ class _GarmentEditDetailsScreenState extends State<GarmentEditDetailsScreen> {
                   clipBehavior: Clip.antiAlias,
                   child: File(widget.cutoutPath).existsSync()
                       ? Image.file(File(widget.cutoutPath), fit: BoxFit.contain)
-                      : Image.network(widget.cutoutPath, fit: BoxFit.contain, errorBuilder: (_, __, ___) => const Icon(Icons.checkroom, size: 48)),
+                      : Image.network(widget.cutoutPath, fit: BoxFit.contain, errorBuilder: (context, error, trace) => const Icon(Icons.checkroom, size: 48)),
                 ),
               ),
               const SizedBox(height: 20),
@@ -816,9 +816,9 @@ class _GarmentDetailScreenState extends State<GarmentDetailScreen> {
   Widget _buildGarmentImageWidget(String path) {
     Widget rawImage;
     if (path.startsWith('http://') || path.startsWith('https://')) {
-      rawImage = Image.network(path, fit: BoxFit.contain, errorBuilder: (_, __, ___) => const Icon(Icons.checkroom, size: 64, color: Color(0xFF8C8278)));
+      rawImage = Image.network(path, fit: BoxFit.contain, errorBuilder: (context, error, trace) => const Icon(Icons.checkroom, size: 64, color: Color(0xFF8C8278)));
     } else if (path.isNotEmpty && File(path).existsSync()) {
-      rawImage = Image.file(File(path), fit: BoxFit.contain, errorBuilder: (_, __, ___) => const Icon(Icons.checkroom, size: 64, color: Color(0xFF8C8278)));
+      rawImage = Image.file(File(path), fit: BoxFit.contain, errorBuilder: (context, error, trace) => const Icon(Icons.checkroom, size: 64, color: Color(0xFF8C8278)));
     } else {
       rawImage = Container(
         color: const Color(0xFFE2DDD3),
