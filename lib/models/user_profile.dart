@@ -4,6 +4,7 @@ class UserProfile {
   String email;
   String? selfiePath;
   bool useAvatarInsteadOfPhoto;
+  String? gender;
   Map<String, String?> bodyPhotoPaths;
   double? heightCm;
   double? weightKg;
@@ -39,6 +40,7 @@ class UserProfile {
     required this.email,
     this.selfiePath,
     this.useAvatarInsteadOfPhoto = false,
+    this.gender,
     Map<String, String?>? bodyPhotoPaths,
     this.heightCm,
     this.weightKg,
@@ -101,6 +103,7 @@ class UserProfile {
     'email': email,
     'selfiePath': selfiePath,
     'useAvatarInsteadOfPhoto': useAvatarInsteadOfPhoto,
+    'gender': gender,
     'bodyPhotoPaths': bodyPhotoPaths,
     'heightCm': heightCm,
     'weightKg': weightKg,
@@ -155,6 +158,7 @@ class UserProfile {
       selfiePath: json['selfiePath'] as String?,
       useAvatarInsteadOfPhoto:
       (json['useAvatarInsteadOfPhoto'] as bool?) ?? false,
+      gender: json['gender'] as String?,
       bodyPhotoPaths: photos,
       // num -> double, because JSON may give back an int (e.g. 170 not 170.0)
       heightCm: (json['heightCm'] as num?)?.toDouble(),

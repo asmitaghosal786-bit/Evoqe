@@ -21,6 +21,7 @@ class _ThirdScreenState extends State<ThirdScreen> {
   bool _isBusy = false;
   ImageSource _lastSource = ImageSource.camera;
   String? _selfieName; // encrypted file name, not a path
+  String? _gender;
 
   @override
   void initState() {
@@ -28,6 +29,7 @@ class _ThirdScreenState extends State<ThirdScreen> {
     final user = context.read<SessionState>().currentUser;
     _selfieName = user?.selfiePath;
     _useAvatarInstead = user?.useAvatarInsteadOfPhoto ?? false;
+    _gender = user?.gender;
   }
 
   void _showSnackBar(String message) {
@@ -77,15 +79,20 @@ class _ThirdScreenState extends State<ThirdScreen> {
   }
 
   Future<void> _continue() async {
-    final canContinue = _selfieName != null || _useAvatarInstead;
-    if (!canContinue) {
+    if (_gender == null) {
+      _showSnackBar('Please select your gender to continue.');
+      return;
+    }
+    final canContinuePhoto = _selfieName != null || _useAvatarInstead;
+    if (!canContinuePhoto) {
       _showSnackBar('Add a photo or choose an avatar to continue.');
       return;
     }
 
-    await context
-        .read<SessionState>()
-        .updateProfile((p) => p.useAvatarInsteadOfPhoto = _useAvatarInstead);
+    await context.read<SessionState>().updateProfile((p) {
+      p.useAvatarInsteadOfPhoto = _useAvatarInstead;
+      p.gender = _gender;
+    });
     if (!mounted) return;
 
     // TODO(nav): first-time onboarding flow.
@@ -97,7 +104,7 @@ class _ThirdScreenState extends State<ThirdScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final canContinue = _selfieName != null || _useAvatarInstead;
+    final canContinue = (_selfieName != null || _useAvatarInstead) && _gender != null;
     final isPhotoActionEnabled = !_isBusy && !_useAvatarInstead;
 
     return Scaffold(
@@ -169,6 +176,95 @@ class _ThirdScreenState extends State<ThirdScreen> {
                     color: Color(0xFF6E6760),
                     height: 1.35,
                   ),
+                ),
+
+                const SizedBox(height: 20),
+
+                // Gender Selection Buttons
+                const Text(
+                  'Gender',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF201D19),
+                    letterSpacing: 0.2,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _gender = 'Male';
+                          });
+                        },
+                        child: Container(
+                          height: 48,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: _gender == 'Male'
+                                ? const Color(0xFF4C5547)
+                                : const Color(0xFFEFECE4),
+                            borderRadius: BorderRadius.circular(8.0),
+                            border: _gender == 'Male'
+                                ? null
+                                : Border.all(
+                                    color: const Color(0xFFCDC6BA),
+                                    width: 1.0,
+                                  ),
+                          ),
+                          child: Text(
+                            'Male',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: _gender == 'Male'
+                                  ? const Color(0xFFF5F3EC)
+                                  : const Color(0xFF201D19),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _gender = 'Female';
+                          });
+                        },
+                        child: Container(
+                          height: 48,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: _gender == 'Female'
+                                ? const Color(0xFF4C5547)
+                                : const Color(0xFFEFECE4),
+                            borderRadius: BorderRadius.circular(8.0),
+                            border: _gender == 'Female'
+                                ? null
+                                : Border.all(
+                                    color: const Color(0xFFCDC6BA),
+                                    width: 1.0,
+                                  ),
+                          ),
+                          child: Text(
+                            'Female',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: _gender == 'Female'
+                                  ? const Color(0xFFF5F3EC)
+                                  : const Color(0xFF201D19),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
 
                 const SizedBox(height: 20),

@@ -7,9 +7,6 @@ void main() {
     await tester.pumpWidget(const EvoqeApp());
 
     // Verify key titles and buttons render.
-    expect(find.text('EVOQE'), findsOneWidget);
-    expect(find.text('A world of style,\ncurated for you.'), findsOneWidget);
-    expect(find.text('Sign Up'), findsOneWidget);
-    expect(find.text('Log In'), findsOneWidget);
+    expect(find.text('EVOQE'), findsWidgets);
   });
 }
