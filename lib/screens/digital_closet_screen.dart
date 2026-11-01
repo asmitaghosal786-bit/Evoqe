@@ -5,45 +5,32 @@ import 'package:image_picker/image_picker.dart';
 import '../state/session_state.dart';
 import '../models/garment_item.dart';
 import '../models/lookbook_model.dart';
+import '../widgets/living_closet/editorial_header.dart';
+import '../widgets/living_closet/collection_section.dart';
+import '../widgets/living_closet/style_studio_section.dart';
+import '../widgets/living_closet/outfit_dna_section.dart';
 import 'welcome_screen.dart';
 
-/// Screen A: Digital Closet Dashboard
+/// Entry Point: EVOQE — The Living Closet
 class DigitalClosetScreen extends StatefulWidget {
-  const DigitalClosetScreen({super.key});
+  final int initialSectionIndex;
+  const DigitalClosetScreen({super.key, this.initialSectionIndex = 0});
 
   @override
   State<DigitalClosetScreen> createState() => _DigitalClosetScreenState();
 }
 
 class _DigitalClosetScreenState extends State<DigitalClosetScreen> {
-  String _selectedCategory = 'All';
-  String _searchQuery = '';
-  bool _favoritesOnly = false;
+  late int _activeSectionIndex;
 
-  final List<String> _categories = [
-    'All',
-    'Tops',
-    'Bottoms',
-    'Dresses',
-    'Outerwear',
-    'Shoes',
-    'Bags',
-    'Accessories',
-    'General',
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _activeSectionIndex = widget.initialSectionIndex;
+  }
 
   @override
   Widget build(BuildContext context) {
-    final session = context.watch<SessionState>();
-    final allGarments = session.garments;
-
-    final filtered = allGarments.where((g) {
-      if (_selectedCategory != 'All' && g.category != _selectedCategory) return false;
-      if (_favoritesOnly && !g.isFavorite) return false;
-      if (_searchQuery.isNotEmpty && !g.name.toLowerCase().contains(_searchQuery.toLowerCase())) return false;
-      return true;
-    }).toList();
-
     return Scaffold(
       backgroundColor: const Color(0xFFF5F3EC),
       appBar: AppBar(
@@ -55,221 +42,67 @@ class _DigitalClosetScreenState extends State<DigitalClosetScreen> {
         ),
         title: const EvoqeHeaderLogo(),
         centerTitle: true,
-        actions: [
-          IconButton(
-            icon: Icon(_favoritesOnly ? Icons.favorite_rounded : Icons.favorite_border_rounded, color: const Color(0xFF201D19)),
-            onPressed: () => setState(() => _favoritesOnly = !_favoritesOnly),
-          ),
-        ],
       ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'My Digital Closet',
-                    style: TextStyle(
-                      fontFamily: 'serif',
-                      fontSize: 28,
-                      fontWeight: FontWeight.w400,
-                      color: Color(0xFF201D19),
-                    ),
-                  ),
-                  Text(
-                    '${allGarments.length} items',
-                    style: const TextStyle(fontSize: 13, color: Color(0xFF888077)),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                onChanged: (v) => setState(() => _searchQuery = v),
-                decoration: InputDecoration(
-                  hintText: 'Search wardrobe...',
-                  hintStyle: const TextStyle(color: Color(0xFF888077), fontSize: 13.5),
-                  prefixIcon: const Icon(Icons.search, color: Color(0xFF888077)),
-                  filled: true,
-                  fillColor: const Color(0xFFEFECE4),
-                  contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: Color(0xFFCDC6BA)),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: Color(0xFF3E3129)),
-                  ),
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 8),
+
+                // Living Closet Editorial Magazine Header & Section Selector
+                LivingClosetEditorialHeader(
+                  activeSectionIndex: _activeSectionIndex,
+                  onSectionSelected: (index) {
+                    setState(() {
+                      _activeSectionIndex = index;
+                    });
+                  },
                 ),
-              ),
-              const SizedBox(height: 14),
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                physics: const BouncingScrollPhysics(),
-                child: Row(
-                  children: _categories.map((cat) {
-                    final isSelected = _selectedCategory == cat;
-                    return GestureDetector(
-                      onTap: () => setState(() => _selectedCategory = cat),
-                      child: Container(
-                        margin: const EdgeInsets.only(right: 8),
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: isSelected ? const Color(0xFF3E3129) : const Color(0xFFEFECE4),
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: const Color(0xFFCDC6BA)),
-                        ),
-                        child: Text(
-                          cat,
-                          style: TextStyle(
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w500,
-                            color: isSelected ? const Color(0xFFF5F3EC) : const Color(0xFF201D19),
-                          ),
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Expanded(
-                child: filtered.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.checkroom_outlined, size: 56, color: Color(0xFF8C8278)),
-                            const SizedBox(height: 12),
-                            const Text(
-                              'No wardrobe items found',
-                              style: TextStyle(fontFamily: 'serif', fontSize: 18, color: Color(0xFF201D19)),
-                            ),
-                            const SizedBox(height: 6),
-                            const Text(
-                              'Upload photographs of clothes you own to build your digital closet.',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(fontSize: 12.5, color: Color(0xFF888077)),
-                            ),
-                          ],
-                        ),
-                      )
-                    : GridView.builder(
-                        physics: const BouncingScrollPhysics(),
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          crossAxisSpacing: 14,
-                          mainAxisSpacing: 14,
-                          childAspectRatio: 0.78,
-                        ),
-                        itemCount: filtered.length,
-                        itemBuilder: (context, index) {
-                          final garment = filtered[index];
-                          return GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => GarmentDetailScreen(garmentId: garment.id),
-                                ),
-                              );
-                            },
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFEFECE4),
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: const Color(0xFFCDC6BA)),
-                              ),
-                              clipBehavior: Clip.antiAlias,
-                              child: Stack(
-                                children: [
-                                  Positioned.fill(
-                                    child: garment.cutoutPath.isNotEmpty && File(garment.cutoutPath).existsSync()
-                                        ? Image.file(File(garment.cutoutPath), fit: BoxFit.contain)
-                                        : garment.imagePath.isNotEmpty && File(garment.imagePath).existsSync()
-                                            ? Image.file(File(garment.imagePath), fit: BoxFit.contain)
-                                            : Container(
-                                                color: const Color(0xFFE2DDD3),
-                                                child: const Icon(Icons.checkroom, size: 40, color: Color(0xFF8C8278)),
-                                              ),
-                                  ),
-                                  Positioned(
-                                    bottom: 0,
-                                    left: 0,
-                                    right: 0,
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                                      color: const Color(0xCCF5F3EC),
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            garment.name,
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Color(0xFF201D19)),
-                                          ),
-                                          const SizedBox(height: 2),
-                                          Text(
-                                            '${garment.category} · ${garment.primaryColor}',
-                                            style: const TextStyle(fontSize: 11, color: Color(0xFF888077)),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                  Positioned(
-                                    top: 8,
-                                    right: 8,
-                                    child: GestureDetector(
-                                      onTap: () => session.toggleFavorite(garment.id),
-                                      child: Container(
-                                        padding: const EdgeInsets.all(4),
-                                        decoration: const BoxDecoration(
-                                          color: Color(0xEBF5F3EC),
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: Icon(
-                                          garment.isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                                          size: 16,
-                                          color: const Color(0xFF3E3129),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-              ),
-            ],
+
+                const SizedBox(height: 8),
+
+                // Section Content View (Renders active section content dynamically so scrolling fits exact content height)
+                if (_activeSectionIndex == 0)
+                  const CollectionSection()
+                else if (_activeSectionIndex == 1)
+                  const StyleStudioSection()
+                else
+                  const OutfitDnaSection(),
+
+                const SizedBox(height: 20),
+              ],
+            ),
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: const Color(0xFF3E3129),
-        foregroundColor: const Color(0xFFF5F3EC),
-        tooltip: 'Add Clothing',
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const AddClothingCaptureScreen()),
-          );
-        },
-        child: const Icon(Icons.add_photo_alternate_outlined),
-      ),
+      floatingActionButton: _activeSectionIndex == 0
+          ? FloatingActionButton.extended(
+              backgroundColor: const Color(0xFF3E3129),
+              foregroundColor: const Color(0xFFF5F3EC),
+              elevation: 2,
+              tooltip: 'Add Clothing',
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const AddClothingCaptureScreen()),
+                );
+              },
+              icon: const Icon(Icons.add_a_photo_outlined, size: 18),
+              label: const Text(
+                'Add Clothing',
+                style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, letterSpacing: 0.2),
+              ),
+            )
+          : null,
     );
   }
 }
 
-/// Screen B: Add Clothing (Capture & Isolate)
+/// Add Clothing Capture Screen (Camera / Gallery)
 class AddClothingCaptureScreen extends StatefulWidget {
   const AddClothingCaptureScreen({super.key});
 
@@ -320,7 +153,7 @@ class _AddClothingCaptureScreenState extends State<AddClothingCaptureScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'Add to Digital Closet',
+                'Add to Living Closet',
                 style: TextStyle(
                   fontFamily: 'serif',
                   fontSize: 28,
@@ -465,7 +298,7 @@ class _AddClothingProcessingScreenState extends State<AddClothingProcessingScree
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'Extracting Garment',
+                'Extracting Garment Cutout',
                 style: TextStyle(
                   fontFamily: 'serif',
                   fontSize: 28,
@@ -475,7 +308,7 @@ class _AddClothingProcessingScreenState extends State<AddClothingProcessingScree
               ),
               const SizedBox(height: 8),
               const Text(
-                'Removing background for your digital wardrobe...',
+                'Removing background for your living wardrobe collection...',
                 style: TextStyle(fontSize: 13, color: Color(0xFF6E6760)),
               ),
               const SizedBox(height: 24),
@@ -530,7 +363,7 @@ class _AddClothingProcessingScreenState extends State<AddClothingProcessingScree
   }
 }
 
-/// Screen C: Garment Details & Confirmation
+/// Garment Details & Confirmation Screen
 class GarmentEditDetailsScreen extends StatefulWidget {
   final String imagePath;
   final String cutoutPath;
@@ -550,8 +383,9 @@ class GarmentEditDetailsScreen extends StatefulWidget {
 class _GarmentEditDetailsScreenState extends State<GarmentEditDetailsScreen> {
   late final TextEditingController _nameController;
   late final TextEditingController _brandController;
+  late final TextEditingController _tagsController;
   String _selectedCategory = 'Tops';
-  String _primaryColor = 'Neutral';
+  String _primaryColor = 'Beige';
 
   final List<String> _categories = [
     'Tops',
@@ -565,11 +399,11 @@ class _GarmentEditDetailsScreenState extends State<GarmentEditDetailsScreen> {
   ];
 
   final List<String> _colors = [
-    'Neutral',
+    'Beige',
     'Black',
     'White',
-    'Beige',
     'Brown',
+    'Espresso',
     'Navy',
     'Blue',
     'Green',
@@ -581,16 +415,18 @@ class _GarmentEditDetailsScreenState extends State<GarmentEditDetailsScreen> {
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController(text: widget.existingGarment?.name ?? 'New Garment');
+    _nameController = TextEditingController(text: widget.existingGarment?.name ?? '');
     _brandController = TextEditingController(text: widget.existingGarment?.brand ?? '');
+    _tagsController = TextEditingController(text: widget.existingGarment?.tags.join(', ') ?? '');
     _selectedCategory = widget.existingGarment?.category ?? 'Tops';
-    _primaryColor = widget.existingGarment?.primaryColor ?? 'Neutral';
+    _primaryColor = widget.existingGarment?.primaryColor ?? 'Beige';
   }
 
   @override
   void dispose() {
     _nameController.dispose();
     _brandController.dispose();
+    _tagsController.dispose();
     super.dispose();
   }
 
@@ -614,13 +450,13 @@ class _GarmentEditDetailsScreenState extends State<GarmentEditDetailsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Garment Details',
-                style: TextStyle(fontFamily: 'serif', fontSize: 28, color: Color(0xFF201D19)),
+              Text(
+                widget.existingGarment != null ? 'Edit Garment Details' : 'Garment Details',
+                style: const TextStyle(fontFamily: 'serif', fontSize: 28, color: Color(0xFF201D19)),
               ),
               const SizedBox(height: 16),
               SizedBox(
-                height: 160,
+                height: 180,
                 width: double.infinity,
                 child: Container(
                   decoration: BoxDecoration(
@@ -629,7 +465,9 @@ class _GarmentEditDetailsScreenState extends State<GarmentEditDetailsScreen> {
                     border: Border.all(color: const Color(0xFFCDC6BA)),
                   ),
                   clipBehavior: Clip.antiAlias,
-                  child: Image.file(File(widget.cutoutPath), fit: BoxFit.contain),
+                  child: File(widget.cutoutPath).existsSync()
+                      ? Image.file(File(widget.cutoutPath), fit: BoxFit.contain)
+                      : Image.network(widget.cutoutPath, fit: BoxFit.contain, errorBuilder: (_, __, ___) => const Icon(Icons.checkroom, size: 48)),
                 ),
               ),
               const SizedBox(height: 20),
@@ -655,12 +493,17 @@ class _GarmentEditDetailsScreenState extends State<GarmentEditDetailsScreen> {
                 dropdownColor: const Color(0xFFF5F3EC),
                 decoration: const InputDecoration(filled: true, fillColor: Color(0xFFEFECE4)),
                 items: _colors.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
-                onChanged: (v) => setState(() => _primaryColor = v ?? 'Neutral'),
+                onChanged: (v) => setState(() => _primaryColor = v ?? 'Beige'),
               ),
               const SizedBox(height: 14),
               TextField(
                 controller: _brandController,
                 decoration: const InputDecoration(labelText: 'Brand (Optional)', filled: true, fillColor: Color(0xFFEFECE4)),
+              ),
+              const SizedBox(height: 14),
+              TextField(
+                controller: _tagsController,
+                decoration: const InputDecoration(labelText: 'Tags (comma separated, e.g. Silk, Tailored)', filled: true, fillColor: Color(0xFFEFECE4)),
               ),
               const SizedBox(height: 24),
               SizedBox(
@@ -675,32 +518,38 @@ class _GarmentEditDetailsScreenState extends State<GarmentEditDetailsScreen> {
                   ),
                   onPressed: () {
                     final session = context.read<SessionState>();
+                    final tags = _tagsController.text.split(',').map((t) => t.trim()).where((t) => t.isNotEmpty).toList();
+                    final name = _nameController.text.trim().isEmpty ? 'Garment Item' : _nameController.text.trim();
+
                     if (widget.existingGarment != null) {
-                      widget.existingGarment!.name = _nameController.text.trim();
+                      widget.existingGarment!.name = name;
                       widget.existingGarment!.category = _selectedCategory;
                       widget.existingGarment!.primaryColor = _primaryColor;
                       widget.existingGarment!.brand = _brandController.text.trim().isEmpty ? null : _brandController.text.trim();
+                      widget.existingGarment!.tags = tags;
                       session.updateGarment(widget.existingGarment!);
                     } else {
                       final garment = GarmentItem(
                         id: DateTime.now().millisecondsSinceEpoch.toString(),
-                        name: _nameController.text.trim(),
+                        name: name,
                         imagePath: widget.imagePath,
                         cutoutPath: widget.cutoutPath,
                         category: _selectedCategory,
                         primaryColor: _primaryColor,
                         brand: _brandController.text.trim().isEmpty ? null : _brandController.text.trim(),
+                        tags: tags,
                         source: 'digital_closet',
                       );
                       session.addGarment(garment);
                     }
+
                     Navigator.popUntil(context, (route) => route.isFirst || route.settings.name == '/' || Navigator.canPop(context) == false);
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(builder: (_) => const DigitalClosetScreen()),
                     );
                   },
-                  child: const Text('Save Look', style: TextStyle(fontWeight: FontWeight.w600)),
+                  child: const Text('Save Garment to Collection', style: TextStyle(fontWeight: FontWeight.w600)),
                 ),
               ),
             ],
@@ -711,16 +560,23 @@ class _GarmentEditDetailsScreenState extends State<GarmentEditDetailsScreen> {
   }
 }
 
-/// Screen D: View a Garment Details
-class GarmentDetailScreen extends StatelessWidget {
+/// Garment Detail Screen (Supports Cutout/Original Toggle & Editing)
+class GarmentDetailScreen extends StatefulWidget {
   final String garmentId;
   const GarmentDetailScreen({super.key, required this.garmentId});
+
+  @override
+  State<GarmentDetailScreen> createState() => _GarmentDetailScreenState();
+}
+
+class _GarmentDetailScreenState extends State<GarmentDetailScreen> {
+  bool _showOriginalPhoto = false;
 
   @override
   Widget build(BuildContext context) {
     final session = context.watch<SessionState>();
     final garment = session.garments.firstWhere(
-      (g) => g.id == garmentId,
+      (g) => g.id == widget.garmentId,
       orElse: () => GarmentItem(
         id: '',
         name: 'Item not found',
@@ -740,6 +596,10 @@ class GarmentDetailScreen extends StatelessWidget {
       );
     }
 
+    final displayImagePath = _showOriginalPhoto
+        ? (garment.imagePath.isNotEmpty ? garment.imagePath : garment.cutoutPath)
+        : (garment.cutoutPath.isNotEmpty ? garment.cutoutPath : garment.imagePath);
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F3EC),
       appBar: AppBar(
@@ -753,12 +613,27 @@ class GarmentDetailScreen extends StatelessWidget {
         centerTitle: true,
         actions: [
           IconButton(
+            icon: const Icon(Icons.edit_outlined, color: Color(0xFF201D19)),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => GarmentEditDetailsScreen(
+                    imagePath: garment.imagePath,
+                    cutoutPath: garment.cutoutPath,
+                    existingGarment: garment,
+                  ),
+                ),
+              );
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.delete_outline_rounded, color: Color(0xFFA33A3A)),
             onPressed: () {
               session.deleteGarment(garment.id);
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Garment deleted.')),
+                const SnackBar(content: Text('Garment deleted from collection.')),
               );
             },
           ),
@@ -770,22 +645,62 @@ class GarmentDetailScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(
-                height: 280,
-                width: double.infinity,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFEFECE4),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: const Color(0xFFCDC6BA)),
+              // Garment Display Card with Cutout/Original Toggle
+              Stack(
+                children: [
+                  Container(
+                    height: 300,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEFECE4),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFFCDC6BA)),
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: _buildGarmentImageWidget(displayImagePath),
+                    ),
                   ),
-                  clipBehavior: Clip.antiAlias,
-                  child: garment.cutoutPath.isNotEmpty && File(garment.cutoutPath).existsSync()
-                      ? Image.file(File(garment.cutoutPath), fit: BoxFit.contain)
-                      : const Icon(Icons.checkroom, size: 64, color: Color(0xFF8C8278)),
-                ),
+                  Positioned(
+                    top: 12,
+                    right: 12,
+                    child: GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _showOriginalPhoto = !_showOriginalPhoto;
+                        });
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xEBF5F3EC),
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: const Color(0xFFCDC6BA)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              _showOriginalPhoto ? Icons.auto_awesome : Icons.image,
+                              size: 14,
+                              color: const Color(0xFF3E3129),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              _showOriginalPhoto ? 'Cutout Mode' : 'Original Photo',
+                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF3E3129)),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
+
               const SizedBox(height: 20),
+
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -804,49 +719,128 @@ class GarmentDetailScreen extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               Text(
-                'Category: ${garment.category} · Color: ${garment.primaryColor}',
-                style: const TextStyle(fontSize: 14, color: Color(0xFF888077)),
+                'Category: ${garment.category} · Primary Color: ${garment.primaryColor}',
+                style: const TextStyle(fontSize: 13.5, color: Color(0xFF6E6760)),
               ),
               if (garment.brand != null && garment.brand!.isNotEmpty) ...[
                 const SizedBox(height: 4),
                 Text(
                   'Brand: ${garment.brand}',
-                  style: const TextStyle(fontSize: 14, color: Color(0xFF888077)),
+                  style: const TextStyle(fontSize: 13.5, color: Color(0xFF888077)),
                 ),
               ],
-              const SizedBox(height: 32),
+
+              if (garment.tags.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: garment.tags.map((t) {
+                    return Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE2DDD3),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text('#$t', style: const TextStyle(fontSize: 11, color: Color(0xFF3E3129))),
+                    );
+                  }).toList(),
+                ),
+              ],
+
+              const SizedBox(height: 28),
+
+              // Action Buttons
+              Row(
+                children: [
+                  Expanded(
+                    child: SizedBox(
+                      height: 48,
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF3E3129),
+                          foregroundColor: const Color(0xFFF5F3EC),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                        ),
+                        icon: const Icon(Icons.auto_awesome_outlined, size: 18),
+                        label: const Text('Analyze in Outfit DNA', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                        onPressed: () {
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => DigitalClosetScreen(initialSectionIndex: 2),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
               SizedBox(
                 width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF3E3129),
-                    foregroundColor: const Color(0xFFF5F3EC),
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                height: 48,
+                child: OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF201D19),
+                    side: const BorderSide(color: Color(0xFFCDC6BA)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
                   ),
+                  icon: const Icon(Icons.bookmark_border_rounded, size: 18),
+                  label: const Text('Save to Lookbook Draft', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
                   onPressed: () {
                     session.currentDraft.references.add(
                       LookbookReference(
                         id: DateTime.now().millisecondsSinceEpoch.toString(),
-                        imagePath: garment.cutoutPath,
+                        imagePath: garment.cutoutPath.isNotEmpty ? garment.cutoutPath : garment.imagePath,
                         label: garment.name,
                         category: garment.category,
                       ),
                     );
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Garment added to current Lookbook draft!')),
+                      const SnackBar(content: Text('Garment saved to Lookbook draft!')),
                     );
                   },
-                  child: const Text('Save to Lookbook', style: TextStyle(fontWeight: FontWeight.w600)),
                 ),
               ),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildGarmentImageWidget(String path) {
+    Widget rawImage;
+    if (path.startsWith('http://') || path.startsWith('https://')) {
+      rawImage = Image.network(path, fit: BoxFit.contain, errorBuilder: (_, __, ___) => const Icon(Icons.checkroom, size: 64, color: Color(0xFF8C8278)));
+    } else if (path.isNotEmpty && File(path).existsSync()) {
+      rawImage = Image.file(File(path), fit: BoxFit.contain, errorBuilder: (_, __, ___) => const Icon(Icons.checkroom, size: 64, color: Color(0xFF8C8278)));
+    } else {
+      rawImage = Container(
+        color: const Color(0xFFE2DDD3),
+        child: const Icon(Icons.checkroom, size: 64, color: Color(0xFF8C8278)),
+      );
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFAF8F6F0),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: Colors.white, width: 2),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x18201D19),
+            blurRadius: 6,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(4.0),
+      child: rawImage,
     );
   }
 }

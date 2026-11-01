@@ -13,6 +13,8 @@ class GarmentItem {
   bool isFavorite;
   DateTime createdAt;
   String source; // 'live_try_on' | 'digital_closet'
+  int wearCount;
+  DateTime? lastWornAt;
 
   GarmentItem({
     required this.id,
@@ -29,6 +31,8 @@ class GarmentItem {
     this.isFavorite = false,
     DateTime? createdAt,
     required this.source,
+    this.wearCount = 0,
+    this.lastWornAt,
   })  : tags = tags ?? [],
         createdAt = createdAt ?? DateTime.now();
 
@@ -47,6 +51,8 @@ class GarmentItem {
         'isFavorite': isFavorite,
         'createdAt': createdAt.millisecondsSinceEpoch,
         'source': source,
+        'wearCount': wearCount,
+        'lastWornAt': lastWornAt?.millisecondsSinceEpoch,
       };
 
   factory GarmentItem.fromJson(Map<String, dynamic> json) => GarmentItem(
@@ -64,6 +70,10 @@ class GarmentItem {
         isFavorite: json['isFavorite'] as bool? ?? false,
         createdAt: DateTime.fromMillisecondsSinceEpoch(json['createdAt'] as int),
         source: json['source'] as String? ?? 'digital_closet',
+        wearCount: json['wearCount'] as int? ?? 0,
+        lastWornAt: json['lastWornAt'] != null
+            ? DateTime.fromMillisecondsSinceEpoch(json['lastWornAt'] as int)
+            : null,
       );
 }
 

@@ -4,6 +4,8 @@ import '../data/local_db/session_store.dart';
 import '../models/user_profile.dart';
 import '../models/lookbook_model.dart';
 import '../models/garment_item.dart';
+import '../models/personal_collection.dart';
+import '../models/saved_outfit.dart';
 import '../services/auth_service.dart';
 
 class SavedLook {
@@ -36,32 +38,166 @@ class SessionState extends ChangeNotifier {
   bool hasCompletedOnboarding = false;
   UserProfile? currentUser;
 
+  // Viewing preferences
+  bool showCutoutMode = true;
+
+  void toggleCutoutMode() {
+    showCutoutMode = !showCutoutMode;
+    notifyListeners();
+  }
+
   List<GarmentItem> garments = [
     GarmentItem(
       id: 'g1',
-      name: 'Structured linen blazer',
-      imagePath: '',
-      cutoutPath: '',
+      name: 'Structured Linen Blazer',
+      imagePath: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?auto=format&fit=crop&w=500&q=80',
+      cutoutPath: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?auto=format&fit=crop&w=500&q=80',
       category: 'Outerwear',
       primaryColor: 'Beige',
+      secondaryColor: 'Ivory',
       brand: 'Maison Vale',
       season: 'Spring / Fall',
       occasion: 'Smart Casual',
+      tags: ['Tailored', 'Linen', 'Quiet Luxury'],
       isFavorite: true,
       source: 'digital_closet',
+      wearCount: 5,
+      lastWornAt: DateTime.now().subtract(const Duration(days: 3)),
     ),
     GarmentItem(
       id: 'g2',
-      name: 'High-waist tailored trousers',
-      imagePath: '',
-      cutoutPath: '',
+      name: 'Fluid High-Waist Trouser',
+      imagePath: 'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=500&q=80',
+      cutoutPath: 'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=500&q=80',
       category: 'Bottoms',
       primaryColor: 'Espresso',
+      secondaryColor: 'Black',
       brand: 'Forme Studio',
       season: 'All Season',
       occasion: 'Formal',
+      tags: ['Draped', 'Minimalist', 'Wide-Leg'],
+      isFavorite: true,
+      source: 'digital_closet',
+      wearCount: 8,
+      lastWornAt: DateTime.now().subtract(const Duration(days: 1)),
+    ),
+    GarmentItem(
+      id: 'g3',
+      name: 'Silk Button-Down Shirt',
+      imagePath: 'https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?auto=format&fit=crop&w=500&q=80',
+      cutoutPath: 'https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?auto=format&fit=crop&w=500&q=80',
+      category: 'Tops',
+      primaryColor: 'White',
+      secondaryColor: 'Cream',
+      brand: 'Atelier Minimal',
+      season: 'All Season',
+      occasion: 'Work & Evening',
+      tags: ['Silk', 'Classic', 'Elegance'],
       isFavorite: false,
       source: 'digital_closet',
+      wearCount: 12,
+      lastWornAt: DateTime.now().subtract(const Duration(days: 2)),
+    ),
+    GarmentItem(
+      id: 'g4',
+      name: 'Sculpted Leather Loafers',
+      imagePath: 'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=500&q=80',
+      cutoutPath: 'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=500&q=80',
+      category: 'Shoes',
+      primaryColor: 'Black',
+      brand: 'L\'Artisan',
+      season: 'Autumn / Winter',
+      occasion: 'Casual & Formal',
+      tags: ['Leather', 'Sculpted', 'Classic'],
+      isFavorite: true,
+      source: 'digital_closet',
+      wearCount: 4,
+      lastWornAt: DateTime.now().subtract(const Duration(days: 4)),
+    ),
+    GarmentItem(
+      id: 'g5',
+      name: 'Minimalist Shoulder Tote',
+      imagePath: 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=500&q=80',
+      cutoutPath: 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=500&q=80',
+      category: 'Bags',
+      primaryColor: 'Brown',
+      secondaryColor: 'Tan',
+      brand: 'Céline sample',
+      season: 'All Season',
+      occasion: 'Everyday',
+      tags: ['Structure', 'Leather', 'Essential'],
+      isFavorite: false,
+      source: 'digital_closet',
+      wearCount: 15,
+      lastWornAt: DateTime.now().subtract(const Duration(days: 1)),
+    ),
+    GarmentItem(
+      id: 'g6',
+      name: 'Sculpted Gold Hoops',
+      imagePath: 'https://images.unsplash.com/photo-1630019852942-f89202989a59?auto=format&fit=crop&w=500&q=80',
+      cutoutPath: 'https://images.unsplash.com/photo-1630019852942-f89202989a59?auto=format&fit=crop&w=500&q=80',
+      category: 'Accessories',
+      primaryColor: 'Yellow',
+      secondaryColor: 'Gold',
+      brand: 'Forme Studio',
+      season: 'All Season',
+      occasion: 'Everyday & Special',
+      tags: ['Jewelry', 'Gold', 'Statement'],
+      isFavorite: true,
+      source: 'digital_closet',
+      wearCount: 0,
+      lastWornAt: null,
+    ),
+    GarmentItem(
+      id: 'g7',
+      name: 'Pleated Slip Midi Dress',
+      imagePath: 'https://images.unsplash.com/photo-1539109136881-3be0616acf4b?auto=format&fit=crop&w=500&q=80',
+      cutoutPath: 'https://images.unsplash.com/photo-1539109136881-3be0616acf4b?auto=format&fit=crop&w=500&q=80',
+      category: 'Dresses',
+      primaryColor: 'Black',
+      brand: 'Noir Atelier',
+      season: 'Summer / Evening',
+      occasion: 'Cocktail & Evening',
+      tags: ['Silk', 'Fluid', 'Evening'],
+      isFavorite: false,
+      source: 'digital_closet',
+      wearCount: 1,
+      lastWornAt: DateTime.now().subtract(const Duration(days: 20)),
+    ),
+  ];
+
+  List<PersonalCollection> personalCollections = [
+    PersonalCollection(
+      id: 'pc1',
+      name: 'Black & Ivory',
+      description: 'Timeless monochrome contrast for refined everyday styling',
+      garmentIds: ['g2', 'g3', 'g4', 'g7'],
+    ),
+    PersonalCollection(
+      id: 'pc2',
+      name: 'Quiet Luxury',
+      description: 'Relaxed tailoring, natural fabrics, and subdued tones',
+      garmentIds: ['g1', 'g2', 'g3', 'g5'],
+    ),
+    PersonalCollection(
+      id: 'pc3',
+      name: 'Pieces I Want to Style',
+      description: 'Statement pieces waiting for new garment combinations',
+      garmentIds: ['g6', 'g7', 'g1'],
+    ),
+  ];
+
+  List<SavedOutfit> savedOutfits = [
+    SavedOutfit(
+      id: 'so1',
+      name: 'Atelier Afternoon Fit',
+      occasion: 'Smart Casual',
+      tags: ['Monochrome', 'Quiet Luxury'],
+      positions: [
+        CanvasPosition(garmentId: 'g1', dx: 0.3, dy: 0.3, scale: 1.0),
+        CanvasPosition(garmentId: 'g2', dx: 0.7, dy: 0.6, scale: 0.95),
+        CanvasPosition(garmentId: 'g5', dx: 0.2, dy: 0.7, scale: 0.8),
+      ],
     ),
   ];
 
@@ -80,6 +216,9 @@ class SessionState extends ChangeNotifier {
 
   void deleteGarment(String id) {
     garments.removeWhere((g) => g.id == id);
+    for (final col in personalCollections) {
+      col.garmentIds.remove(id);
+    }
     notifyListeners();
   }
 
@@ -89,6 +228,66 @@ class SessionState extends ChangeNotifier {
       garments[index].isFavorite = !garments[index].isFavorite;
       notifyListeners();
     }
+  }
+
+  void addPersonalCollection(PersonalCollection collection) {
+    personalCollections.insert(0, collection);
+    notifyListeners();
+  }
+
+  void updatePersonalCollection(PersonalCollection collection) {
+    final idx = personalCollections.indexWhere((c) => c.id == collection.id);
+    if (idx >= 0) {
+      personalCollections[idx] = collection;
+      notifyListeners();
+    }
+  }
+
+  void deletePersonalCollection(String id) {
+    personalCollections.removeWhere((c) => c.id == id);
+    notifyListeners();
+  }
+
+  void addGarmentToCollection(String collectionId, String garmentId) {
+    final col = personalCollections.firstWhere((c) => c.id == collectionId, orElse: () => PersonalCollection(id: '', name: ''));
+    if (col.id.isNotEmpty && !col.garmentIds.contains(garmentId)) {
+      col.garmentIds.add(garmentId);
+      notifyListeners();
+    }
+  }
+
+  void removeGarmentFromCollection(String collectionId, String garmentId) {
+    final col = personalCollections.firstWhere((c) => c.id == collectionId, orElse: () => PersonalCollection(id: '', name: ''));
+    if (col.id.isNotEmpty) {
+      col.garmentIds.remove(garmentId);
+      notifyListeners();
+    }
+  }
+
+  void saveOutfitComposition(SavedOutfit outfit) {
+    final idx = savedOutfits.indexWhere((o) => o.id == outfit.id);
+    if (idx >= 0) {
+      savedOutfits[idx] = outfit;
+    } else {
+      savedOutfits.insert(0, outfit);
+    }
+
+    // Also push to savedLooks for seamless integration across app tabs
+    final savedLook = SavedLook(
+      id: outfit.id,
+      title: outfit.name,
+      category: 'Style Studio Outfit',
+      imagePath: garments.firstWhere((g) => outfit.positions.any((p) => p.garmentId == g.id), orElse: () => garments.first).cutoutPath,
+    );
+    savedLooks.insert(0, savedLook);
+
+    notifyListeners();
+  }
+
+  void deleteOutfit(String id) {
+    savedOutfits.removeWhere((o) => o.id == id);
+    savedLooks.removeWhere((l) => l.id == id);
+    notifyListeners();
   }
 
   LookbookModel currentDraft = LookbookModel(
