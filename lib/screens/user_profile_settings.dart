@@ -555,23 +555,23 @@ class ProfileContentWidget extends StatelessWidget {
         const Divider(color: Color(0xFFD6CFC4), height: 1, thickness: 1),
         InkWell(
           onTap: () => _showLogOutDialog(context),
-          child: const Padding(
-            padding: EdgeInsets.symmetric(vertical: 16.0),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16.0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
+                const Text(
                   'Log Out',
                   style: TextStyle(
                     fontSize: 14.5,
-                    fontWeight: FontWeight.w400,
-                    color: Color(0xFF201D19),
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFFC53030),
                   ),
                 ),
-                Icon(
+                const Icon(
                   Icons.logout_rounded,
                   size: 18,
-                  color: Color(0xFF201D19),
+                  color: Color(0xFFC53030),
                 ),
               ],
             ),
