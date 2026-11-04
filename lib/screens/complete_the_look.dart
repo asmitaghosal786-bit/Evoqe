@@ -156,7 +156,7 @@ class _TwelfthScreenState extends State<TwelfthScreen> {
                           ),
                           const SizedBox(height: 2),
                           const Text(
-                            'Sample total ₹9,500',
+                            'Sample total \$9,500',
                             style: TextStyle(
                               fontSize: 11.5,
                               color: Color(0xFF888077),
@@ -280,7 +280,7 @@ class _TwelfthScreenState extends State<TwelfthScreen> {
                         imageUrl: _waistcoatUrl,
                         title: 'Linen waistcoat',
                         brand: 'Maison Vale',
-                        price: '₹2,400',
+                        price: '\$2,400',
                         isSaved: _isWaistcoatSaved,
                         onSavedToggle: () {
                           setState(() {
@@ -295,7 +295,7 @@ class _TwelfthScreenState extends State<TwelfthScreen> {
                         imageUrl: _trouserUrl,
                         title: 'Fluid tailored trouser',
                         brand: 'Maison Vale',
-                        price: '₹2,200',
+                        price: '\$2,200',
                         isSaved: _isTrouserSaved,
                         onSavedToggle: () {
                           setState(() {

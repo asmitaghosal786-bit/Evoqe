@@ -1,24 +1,110 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../data/security/secure_media_store.dart';
+import '../models/catalog_product.dart';
+import '../services/cart_actions.dart';
+import '../services/evoqe_api.dart';
+import '../state/session_state.dart';
+import '../widgets/secure_image.dart';
 import 'welcome_screen.dart';
 
 class TenthScreen extends StatefulWidget {
-  const TenthScreen({super.key});
+  const TenthScreen({super.key, this.product});
+
+  final CatalogProduct? product;
 
   @override
   State<TenthScreen> createState() => _TenthScreenState();
 }
 
 class _TenthScreenState extends State<TenthScreen> {
-  String _selectedSize = 'M';
   bool _isItemSaved = false;
+  bool _isTryingOn = false;
+  String? _resultUrl;
+  String? _tryOnMessage;
 
   static const String _jewelryModelUrl =
       'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80';
   static const String _earringsThumbnailUrl =
       'https://images.unsplash.com/photo-1630019852942-f89202989a59?auto=format&fit=crop&w=300&q=80';
 
+  Future<void> _startTryOn() async {
+    final product = widget.product;
+    final user = context.read<SessionState>().currentUser;
+    final selfieName = user?.selfiePath;
+    final selfieMatchesGender =
+        user?.selfieGender == null || user?.selfieGender == user?.gender;
+    if (product == null) {
+      setState(
+        () => _tryOnMessage = 'Select a catalog jewelry item to try it on.',
+      );
+      return;
+    }
+    if (user == null || selfieName == null || !selfieMatchesGender) {
+      setState(
+        () => _tryOnMessage = 'Add or update your profile selfie in profile settings to use jewelry try-on.',
+      );
+      return;
+    }
+
+    final imageBytes = await context.read<SecureMediaStore>().load(selfieName);
+    if (!mounted) return;
+    if (imageBytes == null) {
+      setState(
+        () => _tryOnMessage = 'The saved selfie could not be opened. Update it in profile settings.',
+      );
+      return;
+    }
+    setState(() {
+      _isTryingOn = true;
+      _resultUrl = null;
+      _tryOnMessage = 'Uploading your selfie securely…';
+    });
+    try {
+      final task = await EvoqeApi.startProductTryOn(
+        productId: product.id,
+        storeDomain: product.storeDomain,
+        userImage: imageBytes,
+        gender: user.gender,
+      );
+      for (var attempt = 0; attempt < 60; attempt++) {
+        await Future.delayed(const Duration(seconds: 3));
+        if (!mounted) return;
+        final status = await EvoqeApi.getProductTryOnStatus(
+          taskId: task.taskId,
+          taskType: task.taskType,
+        );
+        if (status.status == 'success' && status.resultUrl != null) {
+          setState(() {
+            _resultUrl = status.resultUrl;
+            _tryOnMessage = null;
+          });
+          return;
+        }
+        if (status.status == 'error') {
+          throw EvoqeApiException(
+            status.error ?? 'YouCam could not process this selfie.',
+          );
+        }
+        setState(() => _tryOnMessage = 'Creating your jewelry try-on…');
+      }
+      setState(
+        () => _tryOnMessage =
+            'This is taking longer than expected. Please try again shortly.',
+      );
+    } on EvoqeApiException catch (error) {
+      if (mounted) setState(() => _tryOnMessage = error.message);
+    } finally {
+      if (mounted) setState(() => _isTryingOn = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final user = context.watch<SessionState>().currentUser;
+    final selfieMatchesGender =
+        user?.selfieGender == null || user?.selfieGender == user?.gender;
     return Scaffold(
       backgroundColor: const Color(0xFFF5F3EC),
       body: SafeArea(
@@ -56,7 +142,7 @@ class _TenthScreenState extends State<TenthScreen> {
                         color: Color(0xFF201D19),
                         size: 22,
                       ),
-                      onPressed: () {},
+                      onPressed: () => openShoppingBag(context),
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
                     ),
@@ -77,21 +163,36 @@ class _TenthScreenState extends State<TenthScreen> {
                     child: Stack(
                       children: [
                         Positioned.fill(
-                          child: Image.network(
-                            _jewelryModelUrl,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) =>
-                                Container(
-                              color: const Color(0xFFDDD7CC),
-                              child: const Center(
-                                child: Icon(
-                                  Icons.person_outline_rounded,
-                                  size: 48,
-                                  color: Color(0xFF8C8278),
+                          child: _resultUrl != null
+                              ? Image.network(
+                                  _resultUrl!,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      const SizedBox.shrink(),
+                                )
+                              : user?.selfiePath != null && selfieMatchesGender
+                              ? SecureImage(
+                                  fileName: user?.selfiePath,
+                                  placeholder: Image.network(
+                                    _jewelryModelUrl,
+                                    fit: BoxFit.cover,
+                                  ),
+                                )
+                              : Image.network(
+                                  _jewelryModelUrl,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      Container(
+                                        color: const Color(0xFFDDD7CC),
+                                        child: const Center(
+                                          child: Icon(
+                                            Icons.person_outline_rounded,
+                                            size: 48,
+                                            color: Color(0xFF8C8278),
+                                          ),
+                                        ),
+                                      ),
                                 ),
-                              ),
-                            ),
-                          ),
                         ),
 
                         // Top Left Demo Badge
@@ -107,8 +208,10 @@ class _TenthScreenState extends State<TenthScreen> {
                               color: const Color(0xEBF5F3EC),
                               borderRadius: BorderRadius.circular(2.0),
                             ),
-                            child: const Text(
-                              'JEWELRY PREVIEW DEMO',
+                            child: Text(
+                              widget.product == null
+                                  ? 'JEWELRY PREVIEW DEMO'
+                                  : 'AI JEWELRY VIRTUAL TRY-ON',
                               style: TextStyle(
                                 fontSize: 9.5,
                                 fontWeight: FontWeight.w700,
@@ -182,19 +285,19 @@ class _TenthScreenState extends State<TenthScreen> {
                       ),
                       clipBehavior: Clip.antiAlias,
                       child: Image.network(
-                        _earringsThumbnailUrl,
+                        widget.product?.imageUrl ?? _earringsThumbnailUrl,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) =>
                             Container(color: const Color(0xFFDDD7CC)),
                       ),
                     ),
                     const SizedBox(width: 14),
-                    const Expanded(
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Sculpted gold hoops',
+                            widget.product?.title ?? 'Sculpted gold hoops',
                             style: TextStyle(
                               fontFamily: 'serif',
                               fontSize: 20,
@@ -204,7 +307,9 @@ class _TenthScreenState extends State<TenthScreen> {
                           ),
                           SizedBox(height: 2),
                           Text(
-                            'Gold tone · 18 mm · Forme Studio · sample ₹850',
+                            widget.product == null
+                                ? 'Gold tone · 18 mm · Forme Studio · sample \$850'
+                                : '${widget.product!.vendor} · ${widget.product!.formattedPrice}',
                             style: TextStyle(
                               fontSize: 12,
                               color: Color(0xFF888077),
@@ -221,56 +326,10 @@ class _TenthScreenState extends State<TenthScreen> {
                 // Disclaimer Note
                 const Text(
                   'Illustrative preview · not a precise scale or fit simulation',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Color(0xFF888077),
-                  ),
+                  style: TextStyle(fontSize: 11, color: Color(0xFF888077)),
                 ),
 
                 const SizedBox(height: 16),
-
-                // Size Selector (S, M, L)
-                Row(
-                  children: ['S', 'M', 'L'].map((size) {
-                    final isSelected = size == _selectedSize;
-                    return GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _selectedSize = size;
-                        });
-                      },
-                      child: Container(
-                        margin: const EdgeInsets.only(right: 10),
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? const Color(0xFF3E3129)
-                              : const Color(0xFFEFECE4),
-                          borderRadius: BorderRadius.circular(4.0),
-                          border: Border.all(
-                            color: isSelected
-                                ? const Color(0xFF3E3129)
-                                : const Color(0xFFCDC6BA),
-                            width: 1.0,
-                          ),
-                        ),
-                        child: Center(
-                          child: Text(
-                            size,
-                            style: TextStyle(
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w600,
-                              color: isSelected
-                                  ? const Color(0xFFF5F3EC)
-                                  : const Color(0xFF201D19),
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
 
                 const SizedBox(height: 20),
 
@@ -279,7 +338,7 @@ class _TenthScreenState extends State<TenthScreen> {
                   width: double.infinity,
                   height: 52,
                   child: ElevatedButton(
-                    onPressed: () {},
+                    onPressed: _isTryingOn ? null : _startTryOn,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF3E3129),
                       foregroundColor: const Color(0xFFF5F3EC),
@@ -288,11 +347,11 @@ class _TenthScreenState extends State<TenthScreen> {
                         borderRadius: BorderRadius.circular(4.0),
                       ),
                     ),
-                    child: const Row(
+                    child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          'Try-On',
+                          _isTryingOn ? 'Applying…' : 'Try-On',
                           style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w600,
@@ -300,12 +359,43 @@ class _TenthScreenState extends State<TenthScreen> {
                           ),
                         ),
                         SizedBox(width: 8),
-                        Icon(
-                          Icons.diamond_outlined,
-                          size: 18,
-                        ),
+                        if (_isTryingOn)
+                          const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        else
+                          const Icon(Icons.diamond_outlined, size: 18),
                       ],
                     ),
+                  ),
+                ),
+                if (_tryOnMessage != null) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    _tryOnMessage!,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF8A4F32),
+                    ),
+                  ),
+                ],
+
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: OutlinedButton(
+                    onPressed: () => addProductToCart(context, widget.product),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF201D19),
+                      side: const BorderSide(color: Color(0xFF8C8278)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                    child: const Text('Add to bag'),
                   ),
                 ),
 

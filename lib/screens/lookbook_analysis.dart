@@ -1,8 +1,11 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../state/session_state.dart';
 import '../models/lookbook_model.dart';
+import '../services/evoqe_api.dart';
 import 'welcome_screen.dart';
 import 'lookbook_results.dart';
 
@@ -16,7 +19,9 @@ class SixteenthScreen extends StatelessWidget {
     final analysis = LookbookAnalyzer.analyze(draft);
 
     // Get image paths from references if any exist
-    final imageReferences = draft.references.where((r) => r.imagePath.isNotEmpty).toList();
+    final imageReferences = draft.references
+        .where((r) => r.imagePath.isNotEmpty)
+        .toList();
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F3EC),
@@ -95,10 +100,7 @@ class SixteenthScreen extends StatelessWidget {
                 // Subtitle
                 const Text(
                   'Rule-based aesthetic analyzer',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF888077),
-                  ),
+                  style: TextStyle(fontSize: 12, color: Color(0xFF888077)),
                 ),
 
                 const SizedBox(height: 20),
@@ -107,7 +109,11 @@ class SixteenthScreen extends StatelessWidget {
                 if (imageReferences.isNotEmpty) ...[
                   Row(
                     children: [
-                      for (int i = 0; i < imageReferences.length && i < 2; i++) ...[
+                      for (
+                        int i = 0;
+                        i < imageReferences.length && i < 2;
+                        i++
+                      ) ...[
                         Expanded(
                           child: AspectRatio(
                             aspectRatio: 1.15,
@@ -120,15 +126,21 @@ class SixteenthScreen extends StatelessWidget {
                               child: Image.file(
                                 File(imageReferences[i].imagePath),
                                 fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) => Container(
-                                  color: const Color(0xFFDDD7CC),
-                                  child: const Icon(Icons.image, size: 32, color: Color(0xFF8C8278)),
-                                ),
+                                errorBuilder: (context, error, stackTrace) =>
+                                    Container(
+                                      color: const Color(0xFFDDD7CC),
+                                      child: const Icon(
+                                        Icons.image,
+                                        size: 32,
+                                        color: Color(0xFF8C8278),
+                                      ),
+                                    ),
                               ),
                             ),
                           ),
                         ),
-                        if (i == 0 && imageReferences.length > 1) const SizedBox(width: 12),
+                        if (i == 0 && imageReferences.length > 1)
+                          const SizedBox(width: 12),
                       ],
                     ],
                   ),
@@ -144,7 +156,10 @@ class SixteenthScreen extends StatelessWidget {
                     child: const Center(
                       child: Text(
                         'No reference images uploaded. Analysis derived from description.',
-                        style: TextStyle(fontSize: 12.5, color: Color(0xFF888077)),
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          color: Color(0xFF888077),
+                        ),
                       ),
                     ),
                   ),
@@ -193,7 +208,9 @@ class SixteenthScreen extends StatelessWidget {
 
                 // Swatches Row
                 Row(
-                  children: List.generate(analysis.paletteColors.length, (index) {
+                  children: List.generate(analysis.paletteColors.length, (
+                    index,
+                  ) {
                     final color = analysis.paletteColors[index];
                     return Padding(
                       padding: const EdgeInsets.only(right: 14.0),
@@ -298,14 +315,57 @@ class SixteenthScreen extends StatelessWidget {
                       child: SizedBox(
                         height: 48,
                         child: ElevatedButton(
-                          onPressed: () {
+                          onPressed: () async {
+                            final imagePath = draft.references
+                                .where(
+                                  (reference) => reference.imagePath.isNotEmpty,
+                                )
+                                .map((reference) => reference.imagePath)
+                                .firstOrNull;
+                            if (imagePath == null &&
+                                draft.aestheticDescription.trim().isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Please add at least one reference or description.',
+                                  ),
+                                ),
+                              );
+                              return;
+                            }
                             session.saveCurrentDraft();
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const SeventeenthScreen(),
-                              ),
-                            );
+                            try {
+                              final result = await EvoqeApi.analyzeLookbook(
+                                description: draft.aestheticDescription,
+                                image: imagePath == null
+                                    ? null
+                                    : File(imagePath),
+                              );
+                              if (!context.mounted) return;
+                              await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      SeventeenthScreen(result: result),
+                                ),
+                              );
+                            } on EvoqeApiException catch (error) {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text(error.message)),
+                                );
+                              }
+                            } on FileSystemException catch (error) {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'Could not read the selected image: $error',
+                                    ),
+                                  ),
+                                );
+                              }
+                            }
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF3E3129),

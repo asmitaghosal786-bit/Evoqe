@@ -3,8 +3,10 @@ class UserProfile {
   String name;
   String email;
   String? selfiePath;
+  String? selfieGender;
   bool useAvatarInsteadOfPhoto;
   String? gender;
+  String? bodyPhotoGender;
   Map<String, String?> bodyPhotoPaths;
   Set<String> wardrobe;
   Set<String> beauty;
@@ -30,8 +32,10 @@ class UserProfile {
     required this.name,
     required this.email,
     this.selfiePath,
+    this.selfieGender,
     this.useAvatarInsteadOfPhoto = false,
     this.gender,
+    this.bodyPhotoGender,
     Map<String, String?>? bodyPhotoPaths,
     Set<String>? wardrobe,
     Set<String>? beauty,
@@ -52,40 +56,38 @@ class UserProfile {
     bool? notifyDealAlerts,
     bool? notifyWishlistUpdates,
     bool? notifyOrderUpdates,
-  })  : bodyPhotoPaths = bodyPhotoPaths ??
-      {
-        'front': null,
-        'left': null,
-        'right': null,
-        'back': null,
-      },
-        wardrobe = wardrobe ?? {},
-        beauty = beauty ?? {},
-        jewelry = jewelry ?? {},
-        season = season ?? {},
-        budget = budget ?? {},
-        aesthetics = aesthetics ?? {},
-        palette = palette ?? {},
-        customWardrobe = customWardrobe ?? {},
-        customBeauty = customBeauty ?? {},
-        customJewelry = customJewelry ?? {},
-        customSeason = customSeason ?? {},
-        customBudget = customBudget ?? {},
-        customAesthetics = customAesthetics ?? {},
-        customPalette = customPalette ?? {},
-        notifyStyleRecommendations = notifyStyleRecommendations ?? true,
-        notifyLookbookUpdates = notifyLookbookUpdates ?? true,
-        notifyDealAlerts = notifyDealAlerts ?? true,
-        notifyWishlistUpdates = notifyWishlistUpdates ?? true,
-        notifyOrderUpdates = notifyOrderUpdates ?? true;
+  }) : bodyPhotoPaths =
+           bodyPhotoPaths ??
+           {'front': null, 'left': null, 'right': null, 'back': null},
+       wardrobe = wardrobe ?? {},
+       beauty = beauty ?? {},
+       jewelry = jewelry ?? {},
+       season = season ?? {},
+       budget = budget ?? {},
+       aesthetics = aesthetics ?? {},
+       palette = palette ?? {},
+       customWardrobe = customWardrobe ?? {},
+       customBeauty = customBeauty ?? {},
+       customJewelry = customJewelry ?? {},
+       customSeason = customSeason ?? {},
+       customBudget = customBudget ?? {},
+       customAesthetics = customAesthetics ?? {},
+       customPalette = customPalette ?? {},
+       notifyStyleRecommendations = notifyStyleRecommendations ?? true,
+       notifyLookbookUpdates = notifyLookbookUpdates ?? true,
+       notifyDealAlerts = notifyDealAlerts ?? true,
+       notifyWishlistUpdates = notifyWishlistUpdates ?? true,
+       notifyOrderUpdates = notifyOrderUpdates ?? true;
 
   /// JSON-safe map (Sets become Lists) for storing in the local database.
   Map<String, dynamic> toJson() => {
     'name': name,
     'email': email,
     'selfiePath': selfiePath,
+    'selfieGender': selfieGender,
     'useAvatarInsteadOfPhoto': useAvatarInsteadOfPhoto,
     'gender': gender,
+    'bodyPhotoGender': bodyPhotoGender,
     'bodyPhotoPaths': bodyPhotoPaths,
     'wardrobe': wardrobe.toList(),
     'beauty': beauty.toList(),
@@ -129,9 +131,11 @@ class UserProfile {
       name: json['name'] as String,
       email: json['email'] as String,
       selfiePath: json['selfiePath'] as String?,
+      selfieGender: json['selfieGender'] as String?,
       useAvatarInsteadOfPhoto:
-      (json['useAvatarInsteadOfPhoto'] as bool?) ?? false,
+          (json['useAvatarInsteadOfPhoto'] as bool?) ?? false,
       gender: json['gender'] as String?,
+      bodyPhotoGender: json['bodyPhotoGender'] as String?,
       bodyPhotoPaths: photos,
       wardrobe: stringSet('wardrobe'),
       beauty: stringSet('beauty'),
@@ -147,7 +151,8 @@ class UserProfile {
       customBudget: stringSet('customBudget'),
       customAesthetics: stringSet('customAesthetics'),
       customPalette: stringSet('customPalette'),
-      notifyStyleRecommendations: (json['notifyStyleRecommendations'] as bool?) ?? true,
+      notifyStyleRecommendations:
+          (json['notifyStyleRecommendations'] as bool?) ?? true,
       notifyLookbookUpdates: (json['notifyLookbookUpdates'] as bool?) ?? true,
       notifyDealAlerts: (json['notifyDealAlerts'] as bool?) ?? true,
       notifyWishlistUpdates: (json['notifyWishlistUpdates'] as bool?) ?? true,

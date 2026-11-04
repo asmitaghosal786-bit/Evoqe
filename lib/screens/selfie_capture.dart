@@ -1,16 +1,28 @@
 import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
+
 import '../data/security/photo_picker.dart';
 import '../data/security/secure_media_store.dart';
 import '../state/session_state.dart';
 import '../widgets/secure_image.dart';
+import '../widgets/default_avatar.dart';
 import 'welcome_screen.dart';
 import 'full_body_capture.dart';
 
 class ThirdScreen extends StatefulWidget {
-  const ThirdScreen({super.key});
+  const ThirdScreen({
+    super.key,
+    this.genderChanged = false,
+    this.initialGender,
+    this.showDefaultAvatar = false,
+  });
+
+  final bool genderChanged;
+  final String? initialGender;
+  final bool showDefaultAvatar;
 
   @override
   State<ThirdScreen> createState() => _ThirdScreenState();
@@ -28,8 +40,9 @@ class _ThirdScreenState extends State<ThirdScreen> {
     super.initState();
     final user = context.read<SessionState>().currentUser;
     _selfieName = user?.selfiePath;
-    _useAvatarInstead = user?.useAvatarInsteadOfPhoto ?? false;
-    _gender = user?.gender;
+    _useAvatarInstead =
+        widget.showDefaultAvatar || (user?.useAvatarInsteadOfPhoto ?? false);
+    _gender = widget.initialGender ?? user?.gender;
   }
 
   void _showSnackBar(String message) {
@@ -58,8 +71,15 @@ class _ThirdScreenState extends State<ThirdScreen> {
         replacing: _selfieName,
       );
       if (name != null) {
-        await session.updateProfile((p) => p.selfiePath = name);
-        if (mounted) setState(() => _selfieName = name);
+        await session.updateProfile((p) {
+          p.selfiePath = name;
+          p.selfieGender = _gender;
+        });
+        if (mounted) {
+          setState(() {
+            _selfieName = name;
+          });
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -68,7 +88,8 @@ class _ThirdScreenState extends State<ThirdScreen> {
           _showSnackBar('Could not save the photo. Try again.');
         } else if (source == ImageSource.camera) {
           _showSnackBar(
-              "Couldn't open the camera. Check permissions or try Upload photo.");
+            "Couldn't open the camera. Check permissions or try Upload photo.",
+          );
         } else {
           _showSnackBar("Couldn't open your photos. Please try again.");
         }
@@ -89,22 +110,27 @@ class _ThirdScreenState extends State<ThirdScreen> {
       return;
     }
 
-    await context.read<SessionState>().updateProfile((p) {
+    final session = context.read<SessionState>();
+    await session.updateProfile((p) {
       p.useAvatarInsteadOfPhoto = _useAvatarInstead;
       p.gender = _gender;
+      if (p.selfiePath != null) p.selfieGender = _gender;
     });
     if (!mounted) return;
 
     // TODO(nav): first-time onboarding flow.
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const FourthScreen()),
+      MaterialPageRoute(
+        builder: (context) => FourthScreen(genderChanged: widget.genderChanged),
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final canContinue = (_selfieName != null || _useAvatarInstead) && _gender != null;
+    final canContinue =
+        (_selfieName != null || _useAvatarInstead) && _gender != null;
     final isPhotoActionEnabled = !_isBusy && !_useAvatarInstead;
 
     return Scaffold(
@@ -282,7 +308,9 @@ class _ThirdScreenState extends State<ThirdScreen> {
                       children: [
                         // Image or Placeholder
                         Positioned.fill(
-                          child: _selfieName != null
+                          child: _useAvatarInstead
+                              ? DefaultAvatar(gender: _gender, profile: 'front')
+                              : _selfieName != null
                               ? SecureImage(
                                   fileName: _selfieName,
                                   placeholder: _buildImagePlaceholder(),
@@ -293,16 +321,12 @@ class _ThirdScreenState extends State<ThirdScreen> {
                         // Avatar Mode 40% Opacity Overlay
                         if (_useAvatarInstead)
                           Positioned.fill(
-                            child: Container(
-                              color: const Color(0x66F5F3EC),
-                            ),
+                            child: Container(color: const Color(0x66F5F3EC)),
                           ),
 
                         // Dashed Face Oval Guide Overlay
                         Positioned.fill(
-                          child: CustomPaint(
-                            painter: _DashedOvalPainter(),
-                          ),
+                          child: CustomPaint(painter: _DashedOvalPainter()),
                         ),
 
                         // Always Visible Badge Overlay
@@ -322,8 +346,8 @@ class _ThirdScreenState extends State<ThirdScreen> {
                               _useAvatarInstead
                                   ? 'AVATAR MODE'
                                   : (_selfieName != null
-                                      ? 'PREVIEW'
-                                      : 'NO PHOTO YET'),
+                                        ? 'PREVIEW'
+                                        : 'NO PHOTO YET'),
                               style: const TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w600,
@@ -461,10 +485,7 @@ class _ThirdScreenState extends State<ThirdScreen> {
                     ),
                     const Text(
                       'No filters · even lighting',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF7C746C),
-                      ),
+                      style: TextStyle(fontSize: 12, color: Color(0xFF7C746C)),
                     ),
                   ],
                 ),
@@ -608,8 +629,11 @@ class _ThirdScreenState extends State<ThirdScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.person_outline_rounded,
-                size: 48, color: Color(0xFF8C8278)),
+            Icon(
+              Icons.person_outline_rounded,
+              size: 48,
+              color: Color(0xFF8C8278),
+            ),
             SizedBox(height: 8),
             Text(
               'Portrait Preview',
@@ -648,10 +672,7 @@ class _DashedOvalPainter extends CustomPainter {
         final double length = (distance + dashWidth < metric.length)
             ? dashWidth
             : metric.length - distance;
-        canvas.drawPath(
-          metric.extractPath(distance, distance + length),
-          paint,
-        );
+        canvas.drawPath(metric.extractPath(distance, distance + length), paint);
         distance += dashWidth + dashSpace;
       }
     }

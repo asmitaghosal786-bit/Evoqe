@@ -27,9 +27,18 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-    <string>EVOQE uses your camera so you can add photos for virtual try-on. Photos stay encrypted on your device.</string>
-    <key>NSPhotoLibraryUsageDescription</key>
-    <string>EVOQE lets you choose photos for virtual try-on. They are stored encrypted on your device.</string>
+	<string>EVOQE uses your camera for virtual try-on. A selected photo is uploaded only after you consent.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>EVOQE lets you choose a photo for virtual try-on. It is uploaded only after you consent.</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.example.evoqe</string>
+			</array>
+		</dict>
+	</array>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

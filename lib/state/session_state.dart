@@ -1,12 +1,17 @@
-import 'package:flutter/foundation.dart';
+import 'dart:async';
 
-import '../data/local_db/session_store.dart';
-import '../models/user_profile.dart';
+import 'package:flutter/widgets.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../models/catalog_product.dart';
 import '../models/lookbook_model.dart';
 import '../models/garment_item.dart';
 import '../models/personal_collection.dart';
+import '../models/user_profile.dart';
 import '../models/saved_outfit.dart';
+import '../services/app_navigation.dart';
 import '../services/auth_service.dart';
+import '../services/evoqe_api.dart';
 
 class SavedLook {
   final String id;
@@ -26,20 +31,105 @@ class SavedLook {
   }) : createdAt = createdAt ?? DateTime.now();
 }
 
+class ShoppingCartLine {
+  const ShoppingCartLine({
+    required this.product,
+    required this.variant,
+    required this.quantity,
+  });
+
+  final CatalogProduct product;
+  final Map<String, dynamic> variant;
+  final int quantity;
+
+  String get variantId => variant['id'] as String;
+  String get variantTitle => variant['title']?.toString() ?? '';
+  String get currency => variant['currency']?.toString() ?? product.currency;
+  double get unitPrice =>
+      double.tryParse(variant['price']?.toString() ?? '') ??
+      double.tryParse(product.price ?? '') ??
+      0;
+}
+
 /// What the UI listens to: who is logged in and where they are in onboarding.
 class SessionState extends ChangeNotifier {
-  SessionState(this._auth, this._store);
+  SessionState(this._auth) {
+    _authSubscription = _auth.authStateChanges.listen(_handleAuthState);
+  }
 
   final AuthService _auth;
-  final SessionStore _store;
+  late final StreamSubscription _authSubscription;
 
   bool isRestoring = true;
   bool isLoggedIn = false;
   bool hasCompletedOnboarding = false;
+  bool isPasswordRecovery = false;
   UserProfile? currentUser;
 
   // Viewing preferences
   bool showCutoutMode = true;
+  final List<ShoppingCartLine> cart = [];
+
+  void addToCart(CatalogProduct product, Map<String, dynamic> variant) {
+    final variantId = variant['id'];
+    if (!product.available ||
+        variant['available'] != true ||
+        variantId is! String ||
+        variantId.isEmpty) {
+      throw StateError('This product variant is unavailable.');
+    }
+    if (cart.isNotEmpty &&
+        cart.first.product.storeDomain != product.storeDomain) {
+      throw StateError(
+        'Checkout can include products from one Shopify store at a time.',
+      );
+    }
+
+    final existingIndex = cart.indexWhere(
+      (line) => line.product.id == product.id && line.variantId == variantId,
+    );
+    if (existingIndex >= 0) {
+      final existing = cart[existingIndex];
+      if (existing.quantity >= 20) {
+        throw StateError('The maximum quantity for an item is 20.');
+      }
+      cart[existingIndex] = ShoppingCartLine(
+        product: product,
+        variant: variant,
+        quantity: existing.quantity + 1,
+      );
+    } else {
+      cart.add(
+        ShoppingCartLine(product: product, variant: variant, quantity: 1),
+      );
+    }
+    notifyListeners();
+  }
+
+  void setCartQuantity(ShoppingCartLine line, int quantity) {
+    if (quantity < 1 || quantity > 20) return;
+    final index = cart.indexWhere(
+      (item) =>
+          item.product.id == line.product.id &&
+          item.variantId == line.variantId,
+    );
+    if (index < 0) return;
+    cart[index] = ShoppingCartLine(
+      product: line.product,
+      variant: line.variant,
+      quantity: quantity,
+    );
+    notifyListeners();
+  }
+
+  void removeFromCart(ShoppingCartLine line) {
+    cart.removeWhere(
+      (item) =>
+          item.product.id == line.product.id &&
+          item.variantId == line.variantId,
+    );
+    notifyListeners();
+  }
 
   void toggleCutoutMode() {
     showCutoutMode = !showCutoutMode;
@@ -249,7 +339,10 @@ class SessionState extends ChangeNotifier {
   }
 
   void addGarmentToCollection(String collectionId, String garmentId) {
-    final col = personalCollections.firstWhere((c) => c.id == collectionId, orElse: () => PersonalCollection(id: '', name: ''));
+    final col = personalCollections.firstWhere(
+      (c) => c.id == collectionId,
+      orElse: () => PersonalCollection(id: '', name: ''),
+    );
     if (col.id.isNotEmpty && !col.garmentIds.contains(garmentId)) {
       col.garmentIds.add(garmentId);
       notifyListeners();
@@ -257,7 +350,10 @@ class SessionState extends ChangeNotifier {
   }
 
   void removeGarmentFromCollection(String collectionId, String garmentId) {
-    final col = personalCollections.firstWhere((c) => c.id == collectionId, orElse: () => PersonalCollection(id: '', name: ''));
+    final col = personalCollections.firstWhere(
+      (c) => c.id == collectionId,
+      orElse: () => PersonalCollection(id: '', name: ''),
+    );
     if (col.id.isNotEmpty) {
       col.garmentIds.remove(garmentId);
       notifyListeners();
@@ -277,7 +373,12 @@ class SessionState extends ChangeNotifier {
       id: outfit.id,
       title: outfit.name,
       category: 'Style Studio Outfit',
-      imagePath: garments.firstWhere((g) => outfit.positions.any((p) => p.garmentId == g.id), orElse: () => garments.first).cutoutPath,
+      imagePath: garments
+          .firstWhere(
+            (g) => outfit.positions.any((p) => p.garmentId == g.id),
+            orElse: () => garments.first,
+          )
+          .cutoutPath,
     );
     savedLooks.insert(0, savedLook);
 
@@ -295,8 +396,18 @@ class SessionState extends ChangeNotifier {
     title: 'My Curated Lookbook',
     aestheticDescription: 'Quiet luxury meets modern romanticism',
     references: [
-      LookbookReference(id: '1', imagePath: '', label: 'Color palette', category: 'General'),
-      LookbookReference(id: '2', imagePath: '', label: 'Tones - warm, neutral...', category: 'General'),
+      LookbookReference(
+        id: '1',
+        imagePath: '',
+        label: 'Color palette',
+        category: 'General',
+      ),
+      LookbookReference(
+        id: '2',
+        imagePath: '',
+        label: 'Tones - warm, neutral...',
+        category: 'General',
+      ),
     ],
     customCategories: [],
     createdAt: DateTime.now(),
@@ -316,13 +427,24 @@ class SessionState extends ChangeNotifier {
   }
 
   void saveCurrentDraft() {
-    final existingIndex = savedLookbooks.indexWhere((l) => l.id == currentDraft.id);
+    final existingIndex = savedLookbooks.indexWhere(
+      (l) => l.id == currentDraft.id,
+    );
     if (existingIndex >= 0) {
       savedLookbooks[existingIndex] = LookbookModel(
         id: currentDraft.id,
         title: currentDraft.title,
         aestheticDescription: currentDraft.aestheticDescription,
-        references: currentDraft.references.map((r) => LookbookReference(id: r.id, imagePath: r.imagePath, label: r.label, category: r.category)).toList(),
+        references: currentDraft.references
+            .map(
+              (r) => LookbookReference(
+                id: r.id,
+                imagePath: r.imagePath,
+                label: r.label,
+                category: r.category,
+              ),
+            )
+            .toList(),
         customCategories: List.from(currentDraft.customCategories),
         createdAt: currentDraft.createdAt,
       );
@@ -333,7 +455,16 @@ class SessionState extends ChangeNotifier {
           id: currentDraft.id,
           title: currentDraft.title,
           aestheticDescription: currentDraft.aestheticDescription,
-          references: currentDraft.references.map((r) => LookbookReference(id: r.id, imagePath: r.imagePath, label: r.label, category: r.category)).toList(),
+          references: currentDraft.references
+              .map(
+                (r) => LookbookReference(
+                  id: r.id,
+                  imagePath: r.imagePath,
+                  label: r.label,
+                  category: r.category,
+                ),
+              )
+              .toList(),
           customCategories: List.from(currentDraft.customCategories),
           createdAt: currentDraft.createdAt,
         ),
@@ -347,7 +478,16 @@ class SessionState extends ChangeNotifier {
       id: lookbook.id,
       title: lookbook.title,
       aestheticDescription: lookbook.aestheticDescription,
-      references: lookbook.references.map((r) => LookbookReference(id: r.id, imagePath: r.imagePath, label: r.label, category: r.category)).toList(),
+      references: lookbook.references
+          .map(
+            (r) => LookbookReference(
+              id: r.id,
+              imagePath: r.imagePath,
+              label: r.label,
+              category: r.category,
+            ),
+          )
+          .toList(),
       customCategories: List.from(lookbook.customCategories),
       createdAt: lookbook.createdAt,
     );
@@ -371,67 +511,51 @@ class SessionState extends ChangeNotifier {
 
   /// Call once at startup, before runApp().
   Future<void> restore() async {
-    final email = await _store.readEmail();
-    if (email != null) {
-      final result = await _auth.getSession(email);
-      if (result != null && result.ok) {
-        _apply(result);
-      } else {
-        await _store.clear(); // stale session (account was removed)
-      }
-    }
+    final result = await _auth.getSession();
+    if (result != null) _apply(result);
     isRestoring = false;
     notifyListeners();
   }
-
-  Future<bool> accountExists(String email) => _auth.accountExists(email);
 
   /// Returns an error message, or null on success.
   Future<String?> signUp({
     required String name,
     required String email,
     required String password,
-  }) =>
-      _finishAuth(_auth.signUp(name: name, email: email, password: password));
+  }) => _finishAuth(_auth.signUp(name: name, email: email, password: password));
 
-  Future<String?> logIn({
-    required String email,
-    required String password,
-  }) =>
+  Future<String?> logIn({required String email, required String password}) =>
       _finishAuth(_auth.logIn(email: email, password: password));
 
-  Future<String?> signInWithProvider({
-    required SocialProvider provider,
-    required String name,
-    required String email,
-  }) =>
-      _finishAuth(_auth.signInWithProvider(
-        provider: provider,
-        name: name,
-        email: email,
-      ));
+  Future<String?> resetPassword({required String email}) =>
+      _auth.resetPassword(email: email);
 
-  Future<String?> resetPassword({
-    required String email,
-    required String newPassword,
-  }) =>
-      _auth.resetPassword(email: email, newPassword: newPassword);
+  Future<String?> completePasswordReset(String password) async {
+    final error = await _auth.updatePassword(password);
+    if (error != null) return error;
+    isPasswordRecovery = false;
+    await logOut();
+    return null;
+  }
 
   /// State updates immediately; persistence follows, so callers may ignore
   /// the returned Future.
   Future<void> completeOnboarding() async {
     hasCompletedOnboarding = true;
     notifyListeners();
-    final user = currentUser;
-    if (user != null) await _auth.markOnboardingComplete(user.email);
+    final userId = _auth.currentUserId;
+    if (currentUser != null && userId != null) {
+      await _auth.markOnboardingComplete(userId);
+    }
   }
 
   Future<void> logOut() async {
+    await _auth.signOut();
+    cart.clear();
     isLoggedIn = false;
     hasCompletedOnboarding = false;
     currentUser = null;
     notifyListeners();
-    await _store.clear();
   }
 
   /// Runs [update] on the current profile, notifies, then saves it.
@@ -443,11 +567,49 @@ class SessionState extends ChangeNotifier {
     await _auth.saveProfile(user);
   }
 
+  @override
+  void dispose() {
+    _authSubscription.cancel();
+    super.dispose();
+  }
+
+  Future<void> _handleAuthState(AuthState state) async {
+    if (state.event == AuthChangeEvent.passwordRecovery) {
+      isPasswordRecovery = true;
+      notifyListeners();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        appNavigatorKey.currentState?.pushNamed('/password-recovery');
+      });
+      return;
+    }
+    if (state.event == AuthChangeEvent.signedIn) {
+      return;
+    }
+    if (state.event == AuthChangeEvent.signedOut) {
+      isLoggedIn = false;
+      hasCompletedOnboarding = false;
+      currentUser = null;
+      isPasswordRecovery = false;
+      notifyListeners();
+      return;
+    }
+    final result = await _auth.getSession();
+    if (result != null) {
+      _apply(result);
+      notifyListeners();
+    }
+  }
+
   Future<String?> _finishAuth(Future<AuthResult> pending) async {
     final result = await pending;
     if (!result.ok) return result.error;
+    try {
+      await EvoqeApi.verifyAuthenticatedSession();
+    } on EvoqeApiException catch (error) {
+      await _auth.signOut();
+      return error.message;
+    }
     _apply(result);
-    await _store.saveEmail(result.profile!.email);
     notifyListeners();
     return null;
   }

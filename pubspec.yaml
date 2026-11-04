@@ -39,9 +39,10 @@ dependencies:
   path: ^1.9.1
   path_provider: ^2.1.6
   flutter_secure_storage: ^11.2.0
-  bcrypt: ^1.2.0
   cryptography: ^2.9.0
   image_picker: ^1.2.4
+  supabase_flutter: ^2.18.3
+  url_launcher: ^6.3.3
 
 dev_dependencies:
   flutter_test:

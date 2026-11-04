@@ -1,10 +1,13 @@
 import 'dart:ui' show PathMetric;
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
+
 import '../state/session_state.dart';
 import '../models/lookbook_model.dart';
+import '../services/evoqe_api.dart';
 import 'welcome_screen.dart';
 import 'home_screen.dart';
 import 'discover.dart';
@@ -21,13 +24,16 @@ class FifteenthScreen extends StatefulWidget {
 
 class _FifteenthScreenState extends State<FifteenthScreen> {
   int _selectedBottomNavIndex = 2; // Lookbook tab active
+  bool _isGeneratingLookbook = false;
   late TextEditingController _aestheticController;
 
   @override
   void initState() {
     super.initState();
     final session = context.read<SessionState>();
-    _aestheticController = TextEditingController(text: session.currentDraft.aestheticDescription);
+    _aestheticController = TextEditingController(
+      text: session.currentDraft.aestheticDescription,
+    );
     _aestheticController.addListener(_onDescriptionChanged);
   }
 
@@ -36,6 +42,50 @@ class _FifteenthScreenState extends State<FifteenthScreen> {
     session.updateDraft((draft) {
       draft.aestheticDescription = _aestheticController.text;
     });
+  }
+
+  Future<void> _generateLookbook() async {
+    final session = context.read<SessionState>();
+    final draft = session.currentDraft;
+    final imagePath = draft.references
+        .where((reference) => reference.imagePath.isNotEmpty)
+        .map((reference) => reference.imagePath)
+        .firstOrNull;
+    if (imagePath == null && draft.aestheticDescription.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please add at least one reference or description.'),
+        ),
+      );
+      return;
+    }
+
+    session.saveCurrentDraft();
+    setState(() => _isGeneratingLookbook = true);
+    try {
+      final result = await EvoqeApi.analyzeLookbook(
+        description: draft.aestheticDescription,
+        image: imagePath == null ? null : File(imagePath),
+      );
+      if (!mounted) return;
+      await Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => SeventeenthScreen(result: result)),
+      );
+    } on EvoqeApiException catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(error.message)));
+      }
+    } on FileSystemException catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not read the selected image: $error')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isGeneratingLookbook = false);
+    }
   }
 
   @override
@@ -72,7 +122,11 @@ class _FifteenthScreenState extends State<FifteenthScreen> {
       try {
         final picker = ImagePicker();
         if (source == ImageSource.camera) {
-          final pickedFile = await picker.pickImage(source: ImageSource.camera);
+          final pickedFile = await picker.pickImage(
+            source: ImageSource.camera,
+            maxWidth: 1600,
+            imageQuality: 85,
+          );
           if (!mounted) return;
           if (pickedFile != null) {
             final session = context.read<SessionState>();
@@ -82,7 +136,9 @@ class _FifteenthScreenState extends State<FifteenthScreen> {
                   LookbookReference(
                     id: '${DateTime.now().millisecondsSinceEpoch}_${pickedFile.path}',
                     imagePath: pickedFile.path,
-                    label: pickedFile.name.isNotEmpty ? pickedFile.name : 'Reference image',
+                    label: pickedFile.name.isNotEmpty
+                        ? pickedFile.name
+                        : 'Reference image',
                     category: 'General',
                   ),
                 );
@@ -90,7 +146,10 @@ class _FifteenthScreenState extends State<FifteenthScreen> {
             });
           }
         } else {
-          final pickedFiles = await picker.pickMultiImage();
+          final pickedFiles = await picker.pickMultiImage(
+            maxWidth: 1600,
+            imageQuality: 85,
+          );
           if (!mounted) return;
           if (pickedFiles.isNotEmpty) {
             final session = context.read<SessionState>();
@@ -101,7 +160,9 @@ class _FifteenthScreenState extends State<FifteenthScreen> {
                     LookbookReference(
                       id: '${DateTime.now().millisecondsSinceEpoch}_${file.path}',
                       imagePath: file.path,
-                      label: file.name.isNotEmpty ? file.name : 'Reference image',
+                      label: file.name.isNotEmpty
+                          ? file.name
+                          : 'Reference image',
                       category: 'General',
                     ),
                   );
@@ -126,7 +187,10 @@ class _FifteenthScreenState extends State<FifteenthScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFFF5F3EC),
-        title: const Text('Add Category', style: TextStyle(fontFamily: 'serif', color: Color(0xFF201D19))),
+        title: const Text(
+          'Add Category',
+          style: TextStyle(fontFamily: 'serif', color: Color(0xFF201D19)),
+        ),
         content: TextField(
           controller: controller,
           autofocus: true,
@@ -135,13 +199,18 @@ class _FifteenthScreenState extends State<FifteenthScreen> {
             hintStyle: const TextStyle(color: Color(0xFF888077)),
             filled: true,
             fillColor: const Color(0xFFEFECE4),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(4.0)),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(4.0),
+            ),
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel', style: TextStyle(color: Color(0xFF888077))),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: Color(0xFF888077)),
+            ),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -159,7 +228,9 @@ class _FifteenthScreenState extends State<FifteenthScreen> {
     if (result != null && result.isNotEmpty) {
       final session = context.read<SessionState>();
       final lower = result.toLowerCase();
-      final existing = session.currentDraft.customCategories.map((c) => c.toLowerCase()).toList();
+      final existing = session.currentDraft.customCategories
+          .map((c) => c.toLowerCase())
+          .toList();
       if (!existing.contains(lower)) {
         setState(() {
           session.updateDraft((draft) {
@@ -239,10 +310,7 @@ class _FifteenthScreenState extends State<FifteenthScreen> {
                 // Subtitle
                 const Text(
                   'Upload images of details you love. Curate board.',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Color(0xFF6E6760),
-                  ),
+                  style: TextStyle(fontSize: 13, color: Color(0xFF6E6760)),
                 ),
 
                 const SizedBox(height: 20),
@@ -311,7 +379,10 @@ class _FifteenthScreenState extends State<FifteenthScreen> {
                         padding: EdgeInsets.symmetric(vertical: 16.0),
                         child: Text(
                           'No references added yet. Tap the box above to upload photos.',
-                          style: TextStyle(fontSize: 13, color: Color(0xFF888077)),
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Color(0xFF888077),
+                          ),
                         ),
                       )
                     : ReorderableListView.builder(
@@ -348,7 +419,11 @@ class _FifteenthScreenState extends State<FifteenthScreen> {
                                         width: 32,
                                         height: 32,
                                         fit: BoxFit.cover,
-                                        errorBuilder: (context, error, stackTrace) => const Icon(Icons.image, size: 32),
+                                        errorBuilder: (
+                                          context,
+                                          error,
+                                          stackTrace,
+                                        ) => const Icon(Icons.image, size: 32),
                                       ),
                                     ),
                                     const SizedBox(width: 10),
@@ -478,21 +553,7 @@ class _FifteenthScreenState extends State<FifteenthScreen> {
                   width: double.infinity,
                   height: 50,
                   child: ElevatedButton(
-                    onPressed: () {
-                      if (draft.references.isEmpty && draft.aestheticDescription.trim().isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Please add at least one reference or description.')),
-                        );
-                        return;
-                      }
-                      session.saveCurrentDraft();
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const SeventeenthScreen(),
-                        ),
-                      );
-                    },
+                    onPressed: _isGeneratingLookbook ? null : _generateLookbook,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF3E3129),
                       foregroundColor: const Color(0xFFF5F3EC),
@@ -501,14 +562,20 @@ class _FifteenthScreenState extends State<FifteenthScreen> {
                         borderRadius: BorderRadius.circular(4.0),
                       ),
                     ),
-                    child: const Text(
-                      'Generate My Lookbook',
-                      style: TextStyle(
-                        fontSize: 14.5,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.2,
-                      ),
-                    ),
+                    child: _isGeneratingLookbook
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Text(
+                            'Generate My Lookbook',
+                            style: TextStyle(
+                              fontSize: 14.5,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.2,
+                            ),
+                          ),
                   ),
                 ),
 
@@ -562,7 +629,8 @@ class _FifteenthScreenState extends State<FifteenthScreen> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => const SavedLookbooksScreen(),
+                                builder: (context) =>
+                                    const SavedLookbooksScreen(),
                               ),
                             );
                           },
@@ -604,12 +672,7 @@ class _FifteenthScreenState extends State<FifteenthScreen> {
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
           color: Color(0xFFF5F3EC),
-          border: Border(
-            top: BorderSide(
-              color: Color(0xFFD6CFC4),
-              width: 1.0,
-            ),
-          ),
+          border: Border(top: BorderSide(color: Color(0xFFD6CFC4), width: 1.0)),
         ),
         padding: const EdgeInsets.symmetric(vertical: 8.0),
         child: SafeArea(
@@ -660,7 +723,9 @@ class _FifteenthScreenState extends State<FifteenthScreen> {
     String label,
   ) {
     final isSelected = index == _selectedBottomNavIndex;
-    final color = isSelected ? const Color(0xFF201D19) : const Color(0xFF888077);
+    final color = isSelected
+        ? const Color(0xFF201D19)
+        : const Color(0xFF888077);
 
     return InkWell(
       onTap: () {
@@ -674,16 +739,12 @@ class _FifteenthScreenState extends State<FifteenthScreen> {
         } else if (index == 1) {
           Navigator.push(
             context,
-            MaterialPageRoute(
-              builder: (context) => const ThirteenthScreen(),
-            ),
+            MaterialPageRoute(builder: (context) => const ThirteenthScreen()),
           );
         } else if (index == 3) {
           Navigator.push(
             context,
-            MaterialPageRoute(
-              builder: (context) => const EighteenthScreen(),
-            ),
+            MaterialPageRoute(builder: (context) => const EighteenthScreen()),
           );
         } else if (index == 4) {
           Navigator.push(
@@ -701,11 +762,7 @@ class _FifteenthScreenState extends State<FifteenthScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            isSelected ? selectedIcon : icon,
-            size: 22,
-            color: color,
-          ),
+          Icon(isSelected ? selectedIcon : icon, size: 22, color: color),
           const SizedBox(height: 4),
           Text(
             label,
@@ -741,7 +798,11 @@ class SavedLookbooksScreen extends StatelessWidget {
         ),
         title: const Text(
           'Saved Lookbooks',
-          style: TextStyle(fontFamily: 'serif', color: Color(0xFF201D19), fontSize: 18),
+          style: TextStyle(
+            fontFamily: 'serif',
+            color: Color(0xFF201D19),
+            fontSize: 18,
+          ),
         ),
       ),
       body: SafeArea(
@@ -788,7 +849,10 @@ class SavedLookbooksScreen extends StatelessWidget {
                               const SizedBox(height: 4),
                               Text(
                                 '${lookbook.references.length} references · ${lookbook.customCategories.length} categories',
-                                style: const TextStyle(fontSize: 12, color: Color(0xFF888077)),
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Color(0xFF888077),
+                                ),
                               ),
                             ],
                           ),
@@ -803,7 +867,9 @@ class SavedLookbooksScreen extends StatelessWidget {
                             session.loadDraft(lookbook);
                             Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (_) => const SixteenthScreen()),
+                              MaterialPageRoute(
+                                builder: (_) => const SixteenthScreen(),
+                              ),
                             );
                           },
                           child: const Text('View Lookbooks'),
@@ -831,10 +897,12 @@ class _DashedRectPainter extends CustomPainter {
       ..strokeWidth = 1.2;
 
     final path = Path();
-    path.addRRect(RRect.fromRectAndRadius(
-      Rect.fromLTWH(0, 0, size.width, size.height),
-      const Radius.circular(4.0),
-    ));
+    path.addRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(0, 0, size.width, size.height),
+        const Radius.circular(4.0),
+      ),
+    );
 
     for (final PathMetric metric in path.computeMetrics()) {
       double distance = 0.0;
@@ -844,10 +912,7 @@ class _DashedRectPainter extends CustomPainter {
         final double length = (distance + dashWidth < metric.length)
             ? dashWidth
             : metric.length - distance;
-        canvas.drawPath(
-          metric.extractPath(distance, distance + length),
-          paint,
-        );
+        canvas.drawPath(metric.extractPath(distance, distance + length), paint);
         distance += dashWidth + dashSpace;
       }
     }

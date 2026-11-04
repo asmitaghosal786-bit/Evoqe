@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../state/session_state.dart';
+import '../widgets/default_avatar.dart';
+import '../widgets/secure_image.dart';
 import 'welcome_screen.dart';
 import 'selfie_capture.dart';
 import 'full_body_capture.dart';
+
+enum _GenderChangeChoice { cancel, capturePhotos, useDefaultAvatar }
 
 class SeventhScreen extends StatefulWidget {
   const SeventhScreen({super.key});
@@ -13,14 +18,99 @@ class SeventhScreen extends StatefulWidget {
 }
 
 class _SeventhScreenState extends State<SeventhScreen> {
-  // Portrait (close-up) and full-body avatar previews
-  static const String _portraitImageUrl =
-      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=500&q=80';
-  static const String _fullBodyImageUrl =
-      'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=500&q=80';
+  String? _originalGender;
+  String _selectedGender = 'Female';
+
+  @override
+  void initState() {
+    super.initState();
+    final gender = context.read<SessionState>().currentUser?.gender;
+    _originalGender = gender;
+    _selectedGender = gender ?? 'Female';
+  }
+
+  Future<void> _selectGender(String gender) async {
+    if (gender == _selectedGender || gender == _originalGender) {
+      setState(() => _selectedGender = gender);
+      return;
+    }
+
+    setState(() => _selectedGender = gender);
+    final choice = await showDialog<_GenderChangeChoice>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Change avatar gender?'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              'Choose how you want to update your profile for this gender.',
+            ),
+            const SizedBox(height: 12),
+            TextButton(
+              onPressed: () =>
+                  Navigator.pop(dialogContext, _GenderChangeChoice.cancel),
+              child: const Text('Cancel changing'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(
+                dialogContext,
+                _GenderChangeChoice.capturePhotos,
+              ),
+              child: const Text('Continue changing avatar'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(
+                dialogContext,
+                _GenderChangeChoice.useDefaultAvatar,
+              ),
+              child: const Text('Use default avatar for new gender'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (!mounted) return;
+
+    if (choice == null || choice == _GenderChangeChoice.cancel) {
+      setState(() => _selectedGender = _originalGender ?? gender);
+      return;
+    }
+
+    await _saveGenderAndAvatar(gender);
+    if (!mounted || choice == _GenderChangeChoice.useDefaultAvatar) return;
+
+    await Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ThirdScreen(
+          genderChanged: true,
+          initialGender: gender,
+          showDefaultAvatar: true,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _saveGenderAndAvatar(String gender) async {
+    await context.read<SessionState>().updateProfile((profile) {
+      if (profile.selfiePath != null && profile.selfieGender == null) {
+        profile.selfieGender = profile.gender ?? 'Unknown';
+      }
+      if (profile.bodyPhotoPaths.values.any((path) => path != null) &&
+          profile.bodyPhotoGender == null) {
+        profile.bodyPhotoGender = profile.gender ?? 'Unknown';
+      }
+      profile.gender = gender;
+      profile.useAvatarInsteadOfPhoto = true;
+    });
+    _originalGender = gender;
+  }
 
   @override
   Widget build(BuildContext context) {
+    final user = context.watch<SessionState>().currentUser;
     return Scaffold(
       backgroundColor: const Color(0xFFF5F3EC),
       body: SafeArea(
@@ -93,25 +183,47 @@ class _SeventhScreenState extends State<SeventhScreen> {
                   ),
                 ),
 
+                const SizedBox(height: 18),
+
+                const Text(
+                  'Avatar gender',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF201D19),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    _genderChoice('Male'),
+                    const SizedBox(width: 12),
+                    _genderChoice('Female'),
+                  ],
+                ),
                 const SizedBox(height: 20),
 
-                // Avatar Previews: Portrait + Full Body
+                // Avatar previews: portrait and front profile.
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
                       flex: 108,
                       child: _buildAvatarImage(
-                        imageUrl: _portraitImageUrl,
-                        fallbackIcon: Icons.person_outline_rounded,
+                        imagePath: user?.selfiePath,
+                        photoGender: user?.selfieGender,
+                        useAvatar: user?.useAvatarInsteadOfPhoto ?? true,
+                        profile: 'portrait',
                       ),
                     ),
                     const SizedBox(width: 14),
                     Expanded(
                       flex: 106,
                       child: _buildAvatarImage(
-                        imageUrl: _fullBodyImageUrl,
-                        fallbackIcon: Icons.accessibility_new_rounded,
+                        imagePath: user?.bodyPhotoPaths['front'],
+                        photoGender: user?.bodyPhotoGender,
+                        useAvatar: user?.useAvatarInsteadOfPhoto ?? true,
+                        profile: 'front',
                       ),
                     ),
                     const Spacer(flex: 30),
@@ -127,6 +239,30 @@ class _SeventhScreenState extends State<SeventhScreen> {
                 ),
 
                 const SizedBox(height: 18),
+
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Your avatar profile is up to date.'),
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF3E3129),
+                      foregroundColor: const Color(0xFFF5F3EC),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                    child: const Text('Save avatar profile'),
+                  ),
+                ),
+                const SizedBox(height: 14),
 
                 // Change Uploaded Photos for Face Button
                 _buildOutlinedActionButton(
@@ -183,45 +319,62 @@ class _SeventhScreenState extends State<SeventhScreen> {
     );
   }
 
-  Widget _buildAvatarImage({
-    required String imageUrl,
-    required IconData fallbackIcon,
-  }) {
-    return AspectRatio(
-      aspectRatio: 108 / 154,
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(2.0),
-          color: const Color(0xFFE2DDD3),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Image.network(
-          imageUrl,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) => Container(
-            color: const Color(0xFFDDD7CC),
-            child: Center(
-              child: Icon(
-                fallbackIcon,
-                size: 40,
-                color: const Color(0xFF8C8278),
-              ),
+  Widget _genderChoice(String gender) {
+    final selected = _selectedGender == gender;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => _selectGender(gender),
+        child: Container(
+          height: 44,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: selected ? const Color(0xFF4C5547) : const Color(0xFFEFECE4),
+            borderRadius: BorderRadius.circular(6),
+            border: selected
+                ? null
+                : Border.all(color: const Color(0xFFCDC6BA)),
+          ),
+          child: Text(
+            gender,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: selected
+                  ? const Color(0xFFF5F3EC)
+                  : const Color(0xFF201D19),
             ),
           ),
-          loadingBuilder: (context, child, loadingProgress) {
-            if (loadingProgress == null) return child;
-            return Container(
-              color: const Color(0xFFDDD7CC),
-              child: const Center(
-                child: Icon(
-                  Icons.image_outlined,
-                  size: 32,
-                  color: Color(0xFF8C8278),
-                ),
-              ),
-            );
-          },
         ),
+      ),
+    );
+  }
+
+  Widget _buildAvatarImage({
+    required String? imagePath,
+    required String? photoGender,
+    required bool useAvatar,
+    required String profile,
+  }) {
+    final photoMatchesGender =
+        photoGender == null || photoGender == _selectedGender;
+    return AspectRatio(
+      aspectRatio: 108 / 154,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(2),
+        child: !useAvatar && imagePath != null && photoMatchesGender
+            ? SecureImage(
+                fileName: imagePath,
+                placeholder: DefaultAvatar(
+                  gender: _selectedGender,
+                  profile: profile,
+                  showLabel: true,
+                ),
+              )
+            : DefaultAvatar(
+                gender: _selectedGender,
+                profile: profile,
+                showLabel: true,
+              ),
       ),
     );
   }
@@ -238,10 +391,7 @@ class _SeventhScreenState extends State<SeventhScreen> {
         style: OutlinedButton.styleFrom(
           backgroundColor: const Color(0xFFF5F3EC),
           foregroundColor: const Color(0xFF201D19),
-          side: const BorderSide(
-            color: Color(0xFF8C8278),
-            width: 1.0,
-          ),
+          side: const BorderSide(color: Color(0xFF8C8278), width: 1.0),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(2.0),
           ),

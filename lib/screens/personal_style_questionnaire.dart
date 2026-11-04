@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../state/session_state.dart';
 import 'welcome_screen.dart';
 import 'home_screen.dart';
@@ -28,10 +29,15 @@ class _FifthScreenState extends State<FifthScreen> {
   final Set<String> _selectedSeason = {'Winter'};
   final Set<String> _customSeason = {};
 
-  final Set<String> _selectedBudget = {'Under ₹5,000'};
+  final Set<String> _selectedBudget = {'Under \$5,000'};
   final Set<String> _customBudget = {};
 
-  final Set<String> _selectedPalette = {'0xFFFAF8F5', '0xFFE2DDD3', '0xFF3E3129', '0xFF555E4E'};
+  final Set<String> _selectedPalette = {
+    '0xFFFAF8F5',
+    '0xFFE2DDD3',
+    '0xFF3E3129',
+    '0xFF555E4E',
+  };
   final Set<String> _customPalette = {};
 
   bool _showCompleteQuestionnaire = false;
@@ -174,9 +180,7 @@ class _FifthScreenState extends State<FifthScreen> {
 
     Navigator.pushAndRemoveUntil(
       context,
-      MaterialPageRoute(
-        builder: (context) => const EighthScreen(),
-      ),
+      MaterialPageRoute(builder: (context) => const EighthScreen()),
       (route) => false,
     );
   }
@@ -191,7 +195,10 @@ class _FifthScreenState extends State<FifthScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFFF5F3EC),
-        title: Text(title, style: const TextStyle(fontFamily: 'serif', color: Color(0xFF201D19))),
+        title: Text(
+          title,
+          style: const TextStyle(fontFamily: 'serif', color: Color(0xFF201D19)),
+        ),
         content: TextField(
           controller: controller,
           autofocus: true,
@@ -213,7 +220,10 @@ class _FifthScreenState extends State<FifthScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel', style: TextStyle(color: Color(0xFF888077))),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: Color(0xFF888077)),
+            ),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -253,23 +263,31 @@ class _FifthScreenState extends State<FifthScreen> {
       builder: (ctx) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
           backgroundColor: const Color(0xFFF5F3EC),
-          title: const Text('Add Custom Color', style: TextStyle(fontFamily: 'serif', color: Color(0xFF201D19))),
+          title: const Text(
+            'Add Custom Color',
+            style: TextStyle(fontFamily: 'serif', color: Color(0xFF201D19)),
+          ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Choose from palette or enter hex:', style: TextStyle(fontSize: 12.5, color: Color(0xFF6E6760))),
+              const Text(
+                'Choose from palette or enter hex:',
+                style: TextStyle(fontSize: 12.5, color: Color(0xFF6E6760)),
+              ),
               const SizedBox(height: 12),
               Wrap(
                 spacing: 10,
                 runSpacing: 10,
                 children: presetColors.map((color) {
-                  final isSelected = selectedColor.toARGB32() == color.toARGB32();
+                  final isSelected =
+                      selectedColor.toARGB32() == color.toARGB32();
                   return GestureDetector(
                     onTap: () {
                       setDialogState(() {
                         selectedColor = color;
-                        hexController.text = '0xFF${color.toARGB32().toRadixString(16).padLeft(8, '0').toUpperCase().substring(2)}';
+                        hexController.text =
+                            '0xFF${color.toARGB32().toRadixString(16).padLeft(8, '0').toUpperCase().substring(2)}';
                       });
                     },
                     child: Container(
@@ -279,7 +297,9 @@ class _FifthScreenState extends State<FifthScreen> {
                         color: color,
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: isSelected ? const Color(0xFF3E3129) : const Color(0xFFCDC6BA),
+                          color: isSelected
+                              ? const Color(0xFF3E3129)
+                              : const Color(0xFFCDC6BA),
                           width: isSelected ? 2.5 : 1.0,
                         ),
                       ),
@@ -292,7 +312,10 @@ class _FifthScreenState extends State<FifthScreen> {
                 controller: hexController,
                 decoration: InputDecoration(
                   labelText: 'Hex Code (e.g. 0xFF5733)',
-                  labelStyle: const TextStyle(fontSize: 12, color: Color(0xFF888077)),
+                  labelStyle: const TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF888077),
+                  ),
                   filled: true,
                   fillColor: const Color(0xFFEFECE4),
                   enabledBorder: OutlineInputBorder(
@@ -310,7 +333,10 @@ class _FifthScreenState extends State<FifthScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel', style: TextStyle(color: Color(0xFF888077))),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(color: Color(0xFF888077)),
+              ),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -321,7 +347,10 @@ class _FifthScreenState extends State<FifthScreen> {
                 Color colorToAdd = selectedColor;
                 final hexText = hexController.text.trim();
                 if (hexText.isNotEmpty) {
-                  String cleanHex = hexText.replaceAll('#', '').replaceAll('0x', '').replaceAll('0X', '');
+                  String cleanHex = hexText
+                      .replaceAll('#', '')
+                      .replaceAll('0x', '')
+                      .replaceAll('0X', '');
                   if (cleanHex.length == 6) {
                     cleanHex = 'FF$cleanHex';
                   }
@@ -330,7 +359,8 @@ class _FifthScreenState extends State<FifthScreen> {
                     colorToAdd = Color(parsedValue);
                   }
                 }
-                final hexStr = '0x${colorToAdd.toARGB32().toRadixString(16).toUpperCase().padLeft(8, '0')}';
+                final hexStr =
+                    '0x${colorToAdd.toARGB32().toRadixString(16).toUpperCase().padLeft(8, '0')}';
                 setState(() {
                   _customPalette.add(hexStr);
                   _selectedPalette.add(hexStr);
@@ -347,7 +377,13 @@ class _FifthScreenState extends State<FifthScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final baseAesthetics = ['Minimal', 'Coquette', 'Formal', 'Partywear', 'Athleisure'];
+    final baseAesthetics = [
+      'Minimal',
+      'Coquette',
+      'Formal',
+      'Partywear',
+      'Athleisure',
+    ];
     final allAesthetics = [...baseAesthetics, ..._customAesthetics];
 
     return Scaffold(
@@ -495,10 +531,7 @@ class _FifthScreenState extends State<FifthScreen> {
                           ),
                         ),
                         SizedBox(width: 8),
-                        Icon(
-                          Icons.arrow_forward_rounded,
-                          size: 18,
-                        ),
+                        Icon(Icons.arrow_forward_rounded, size: 18),
                       ],
                     ),
                   ),
@@ -548,16 +581,21 @@ class _FifthScreenState extends State<FifthScreen> {
                   const SizedBox(height: 6),
                   const Text(
                     'Choose the categories you would like to explore.',
-                    style: TextStyle(
-                      fontSize: 12.5,
-                      color: Color(0xFF888077),
-                    ),
+                    style: TextStyle(fontSize: 12.5, color: Color(0xFF888077)),
                   ),
 
                   const SizedBox(height: 16),
 
                   _buildChipGroup(
-                    options: ['Western', 'Traditional', 'Athleisure', 'Travel', 'Formal', 'Casual', 'Occasion'],
+                    options: [
+                      'Western',
+                      'Traditional',
+                      'Athleisure',
+                      'Travel',
+                      'Formal',
+                      'Casual',
+                      'Occasion',
+                    ],
                     customOptions: _customWardrobe,
                     selectedOptions: _selectedWardrobe,
                     isSingleSelect: false,
@@ -585,7 +623,9 @@ class _FifthScreenState extends State<FifthScreen> {
                     scrollDirection: Axis.horizontal,
                     child: Row(
                       children: [
-                        ...[..._defaultPaletteHexes, ..._customPalette].map((hexStr) {
+                        ...[..._defaultPaletteHexes, ..._customPalette].map((
+                          hexStr,
+                        ) {
                           final color = Color(int.parse(hexStr));
                           final isSelected = _selectedPalette.contains(hexStr);
                           return Padding(
@@ -607,11 +647,19 @@ class _FifthScreenState extends State<FifthScreen> {
                                   color: color,
                                   shape: BoxShape.circle,
                                   border: Border.all(
-                                    color: isSelected ? const Color(0xFF201D19) : const Color(0xFFCDC6BA),
+                                    color: isSelected
+                                        ? const Color(0xFF201D19)
+                                        : const Color(0xFFCDC6BA),
                                     width: isSelected ? 2.5 : 1.0,
                                   ),
                                   boxShadow: isSelected
-                                      ? const [BoxShadow(color: Color(0x26000000), blurRadius: 4, offset: Offset(0, 2))]
+                                      ? const [
+                                          BoxShadow(
+                                            color: Color(0x26000000),
+                                            blurRadius: 4,
+                                            offset: Offset(0, 2),
+                                          ),
+                                        ]
                                       : null,
                                 ),
                                 child: isSelected
@@ -619,7 +667,10 @@ class _FifthScreenState extends State<FifthScreen> {
                                         child: Icon(
                                           Icons.check,
                                           size: 16,
-                                          color: (color.computeLuminance() > 0.5) ? Colors.black87 : Colors.white,
+                                          color:
+                                              (color.computeLuminance() > 0.5)
+                                              ? Colors.black87
+                                              : Colors.white,
                                         ),
                                       )
                                     : null,
@@ -658,10 +709,7 @@ class _FifthScreenState extends State<FifthScreen> {
 
                   const Text(
                     'Select your preferred color palette swatches or add custom colors.',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFF888077),
-                    ),
+                    style: TextStyle(fontSize: 12, color: Color(0xFF888077)),
                   ),
 
                   const SizedBox(height: 20),
@@ -681,16 +729,19 @@ class _FifthScreenState extends State<FifthScreen> {
                   const SizedBox(height: 6),
                   const Text(
                     'Optional. Your chosen makeup tones, not inferred identity.',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFF6E6760),
-                    ),
+                    style: TextStyle(fontSize: 12, color: Color(0xFF6E6760)),
                   ),
 
                   const SizedBox(height: 16),
 
                   _buildChipGroup(
-                    options: ['Natural finish', 'Soft glam', 'Bold glam', 'Bronzed', 'Experimental'],
+                    options: [
+                      'Natural finish',
+                      'Soft glam',
+                      'Bold glam',
+                      'Bronzed',
+                      'Experimental',
+                    ],
                     customOptions: _customBeauty,
                     selectedOptions: _selectedBeauty,
                     isSingleSelect: false,
@@ -714,10 +765,7 @@ class _FifthScreenState extends State<FifthScreen> {
                   const SizedBox(height: 6),
                   const Text(
                     'Metals and silhouettes you enjoy wearing.',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFF6E6760),
-                    ),
+                    style: TextStyle(fontSize: 12, color: Color(0xFF6E6760)),
                   ),
 
                   const SizedBox(height: 16),
@@ -747,10 +795,7 @@ class _FifthScreenState extends State<FifthScreen> {
                   const SizedBox(height: 6),
                   const Text(
                     'Tell us what your wardrobe needs to cover.',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFF6E6760),
-                    ),
+                    style: TextStyle(fontSize: 12, color: Color(0xFF6E6760)),
                   ),
 
                   const SizedBox(height: 16),
@@ -779,7 +824,7 @@ class _FifthScreenState extends State<FifthScreen> {
                   ),
                   const SizedBox(height: 6),
                   const Text(
-                    'Optional. Used to shape suggestions, not to assess you. INR is the default.',
+                    'Optional. Used to shape suggestions, not to assess you. USD is the default.',
                     style: TextStyle(
                       fontSize: 12,
                       color: Color(0xFF6E6760),
@@ -790,7 +835,12 @@ class _FifthScreenState extends State<FifthScreen> {
                   const SizedBox(height: 16),
 
                   _buildChipGroup(
-                    options: ['Under ₹5,000', '₹5,000–₹10,000', '₹10,000–₹20,000', 'Flexible'],
+                    options: [
+                      'Under \$5,000',
+                      '\$5,000–\$10,000',
+                      '\$10,000–\$20,000',
+                      'Flexible',
+                    ],
                     customOptions: _customBudget,
                     selectedOptions: _selectedBudget,
                     isSingleSelect: true,
@@ -855,7 +905,9 @@ class _FifthScreenState extends State<FifthScreen> {
     List<Widget> rows = [];
     for (int i = 0; i < listWithExplore.length; i += 2) {
       final title1 = listWithExplore[i];
-      final title2 = (i + 1 < listWithExplore.length) ? listWithExplore[i + 1] : null;
+      final title2 = (i + 1 < listWithExplore.length)
+          ? listWithExplore[i + 1]
+          : null;
 
       Widget card1 = title1 == 'EXPLORE_MORE_CARD'
           ? _buildExploreMoreCard()
@@ -864,8 +916,8 @@ class _FifthScreenState extends State<FifthScreen> {
       Widget? card2 = title2 == null
           ? null
           : (title2 == 'EXPLORE_MORE_CARD'
-              ? _buildExploreMoreCard()
-              : _buildAestheticCard(title: title2));
+                ? _buildExploreMoreCard()
+                : _buildAestheticCard(title: title2));
 
       rows.add(
         Row(
@@ -917,7 +969,9 @@ class _FifthScreenState extends State<FifthScreen> {
                 borderRadius: BorderRadius.circular(8.0),
                 color: const Color(0xFFE2DDD3),
                 border: Border.all(
-                  color: isSelected ? const Color(0xFF3E3129) : const Color(0xFFCDC6BA),
+                  color: isSelected
+                      ? const Color(0xFF3E3129)
+                      : const Color(0xFFCDC6BA),
                   width: isSelected ? 2.0 : 1.0,
                 ),
               ),
@@ -931,8 +985,11 @@ class _FifthScreenState extends State<FifthScreen> {
                       errorBuilder: (context, error, stackTrace) => Container(
                         color: const Color(0xFFDDD7CC),
                         child: const Center(
-                          child: Icon(Icons.style_outlined,
-                              size: 32, color: Color(0xFF8C8278)),
+                          child: Icon(
+                            Icons.style_outlined,
+                            size: 32,
+                            color: Color(0xFF8C8278),
+                          ),
                         ),
                       ),
                     ),
@@ -964,7 +1021,9 @@ class _FifthScreenState extends State<FifthScreen> {
             style: TextStyle(
               fontSize: 12.5,
               fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-              color: isSelected ? const Color(0xFF201D19) : const Color(0xFF5A544D),
+              color: isSelected
+                  ? const Color(0xFF201D19)
+                  : const Color(0xFF5A544D),
             ),
           ),
         ],
@@ -981,7 +1040,14 @@ class _FifthScreenState extends State<FifthScreen> {
           onAdded: (name) {
             if (name.isNotEmpty) {
               final lower = name.toLowerCase();
-              final all = ['minimal', 'coquette', 'formal', 'partywear', 'athleisure', ..._customAesthetics.map((e) => e.toLowerCase())];
+              final all = [
+                'minimal',
+                'coquette',
+                'formal',
+                'partywear',
+                'athleisure',
+                ..._customAesthetics.map((e) => e.toLowerCase()),
+              ];
               if (!all.contains(lower)) {
                 setState(() {
                   _customAesthetics.add(name);
@@ -989,7 +1055,9 @@ class _FifthScreenState extends State<FifthScreen> {
                 });
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('This aesthetic already exists.')),
+                  const SnackBar(
+                    content: Text('This aesthetic already exists.'),
+                  ),
                 );
               }
             }
@@ -1005,17 +1073,10 @@ class _FifthScreenState extends State<FifthScreen> {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(8.0),
                 color: const Color(0xFFFFFFFF),
-                border: Border.all(
-                  color: const Color(0xFFCDC6BA),
-                  width: 1.0,
-                ),
+                border: Border.all(color: const Color(0xFFCDC6BA), width: 1.0),
               ),
               child: const Center(
-                child: Icon(
-                  Icons.add,
-                  size: 38,
-                  color: Color(0xFF201D19),
-                ),
+                child: Icon(Icons.add, size: 38, color: Color(0xFF201D19)),
               ),
             ),
           ),
@@ -1058,7 +1119,10 @@ class _FifthScreenState extends State<FifthScreen> {
                 onAdded: (val) {
                   if (val.isNotEmpty) {
                     final lowerVal = val.toLowerCase();
-                    final allExisting = [...options.map((e) => e.toLowerCase()), ...customOptions.map((e) => e.toLowerCase())];
+                    final allExisting = [
+                      ...options.map((e) => e.toLowerCase()),
+                      ...customOptions.map((e) => e.toLowerCase()),
+                    ];
                     if (!allExisting.contains(lowerVal)) {
                       setState(() {
                         customOptions.add(val);
@@ -1071,7 +1135,9 @@ class _FifthScreenState extends State<FifthScreen> {
                       });
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('This option already exists.')),
+                        const SnackBar(
+                          content: Text('This option already exists.'),
+                        ),
                       );
                     }
                   }
@@ -1123,7 +1189,9 @@ class _FifthScreenState extends State<FifthScreen> {
           border: Border.all(
             color: isSelected
                 ? Colors.transparent
-                : (isAction ? const Color(0xFFCDC6BA) : const Color(0xFFCDC6BA)),
+                : (isAction
+                      ? const Color(0xFFCDC6BA)
+                      : const Color(0xFFCDC6BA)),
             width: 1.0,
           ),
         ),
@@ -1141,7 +1209,9 @@ class _FifthScreenState extends State<FifthScreen> {
                 fontWeight: FontWeight.w500,
                 color: isSelected
                     ? const Color(0xFFF5F3EC)
-                    : (isAction ? const Color(0xFF201D19) : const Color(0xFF201D19)),
+                    : (isAction
+                          ? const Color(0xFF201D19)
+                          : const Color(0xFF201D19)),
               ),
             ),
           ],

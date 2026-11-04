@@ -1,4 +1,5 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -9,6 +10,9 @@ import 'jewelry_try_on.dart';
 import 'makeup_try_on.dart';
 import 'lookbook.dart';
 import 'saved_looks.dart';
+import '../models/catalog_product.dart';
+import '../services/cart_actions.dart';
+import '../services/evoqe_api.dart';
 
 class ThirteenthScreen extends StatefulWidget {
   const ThirteenthScreen({super.key});
@@ -30,60 +34,61 @@ class _ThirteenthScreenState extends State<ThirteenthScreen> {
   String? _visualSearchTitle;
   bool _isVisualSearchActive = false;
 
-  final List<String> _categories = const [
+  static const List<String> _categories = [
     'Outfits',
+    'Bags',
+    'Scarves',
+    'Hats',
+    'Shoes',
     'Make-up',
-    'Jewlery',
+    'Jewelry',
   ];
+  final Map<int, CatalogProduct> _productsById = {};
+  bool _isCatalogLoading = true;
+  String? _catalogError;
 
   final Map<int, List<Map<String, String>>> _categoryProducts = {
     0: [
       {
         'title': 'Linen waistcoat',
         'brand': 'Maison Vale',
-        'price': '₹2,400',
-        'imageUrl':
-            'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?auto=format&fit=crop&w=500&q=80',
+        'price': '\$2,400',
+        'imageUrl': 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?auto=format&fit=crop&w=500&q=80',
         'matchScore': '98% Match',
       },
       {
         'title': 'The sculpted blazer',
         'brand': 'Atelier Nine',
-        'price': '₹4,800',
-        'imageUrl':
-            'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=500&q=80',
+        'price': '\$4,800',
+        'imageUrl': 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=500&q=80',
         'matchScore': '94% Match',
       },
       {
         'title': 'Fluid tailored trouser',
         'brand': 'Maison Vale',
-        'price': '₹2,200',
-        'imageUrl':
-            'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=500&q=80',
+        'price': '\$2,200',
+        'imageUrl': 'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=500&q=80',
         'matchScore': '91% Match',
       },
       {
         'title': 'Draped silk blouse',
         'brand': 'Linen & Line',
-        'price': '₹3,100',
-        'imageUrl':
-            'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=500&q=80',
+        'price': '\$3,100',
+        'imageUrl': 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=500&q=80',
         'matchScore': '87% Match',
       },
       {
         'title': 'Arc shoulder bag',
         'brand': 'Atelier Nine',
-        'price': '₹1,800',
-        'imageUrl':
-            'https://images.unsplash.com/photo-1548883354-7622d03aca27?auto=format&fit=crop&w=500&q=80',
+        'price': '\$1,800',
+        'imageUrl': 'https://images.unsplash.com/photo-1548883354-7622d03aca27?auto=format&fit=crop&w=500&q=80',
         'matchScore': '83% Match',
       },
       {
         'title': 'The pointed flat',
         'brand': 'Linen & Line',
-        'price': '₹1,600',
-        'imageUrl':
-            'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=500&q=80',
+        'price': '\$1,600',
+        'imageUrl': 'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=500&q=80',
         'matchScore': '79% Match',
       },
     ],
@@ -91,49 +96,43 @@ class _ThirteenthScreenState extends State<ThirteenthScreen> {
       {
         'title': 'Velvet matte lipstick',
         'brand': 'Maison Beauty',
-        'price': '₹1,200',
-        'imageUrl':
-            'https://images.unsplash.com/photo-1586495777744-4413f21062fa?auto=format&fit=crop&w=500&q=80',
+        'price': '\$1,200',
+        'imageUrl': 'https://images.unsplash.com/photo-1586495777744-4413f21062fa?auto=format&fit=crop&w=500&q=80',
         'matchScore': '97% Match',
       },
       {
         'title': 'Luminous skin tint',
         'brand': 'Atelier Glow',
-        'price': '₹2,100',
-        'imageUrl':
-            'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=500&q=80',
+        'price': '\$2,100',
+        'imageUrl': 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=500&q=80',
         'matchScore': '93% Match',
       },
       {
         'title': 'Sculpting bronzer palette',
         'brand': 'Forme Make-up',
-        'price': '₹2,800',
-        'imageUrl':
-            'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?auto=format&fit=crop&w=500&q=80',
+        'price': '\$2,800',
+        'imageUrl': 'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?auto=format&fit=crop&w=500&q=80',
         'matchScore': '88% Match',
       },
       {
         'title': 'Rose petal blush',
         'brand': 'Maison Beauty',
-        'price': '₹1,500',
-        'imageUrl':
-            'https://images.unsplash.com/photo-1596704017254-9b121068fb31?auto=format&fit=crop&w=500&q=80',
+        'price': '\$1,500',
+        'imageUrl': 'https://images.unsplash.com/photo-1596704017254-9b121068fb31?auto=format&fit=crop&w=500&q=80',
         'matchScore': '85% Match',
       },
       {
         'title': 'Precision eye defining pen',
         'brand': 'Atelier Glow',
-        'price': '₹950',
-        'imageUrl':
-            'https://images.unsplash.com/photo-1571781926291-c477ebfd024b?auto=format&fit=crop&w=500&q=80',
+        'price': '\$950',
+        'imageUrl': 'https://images.unsplash.com/photo-1571781926291-c477ebfd024b?auto=format&fit=crop&w=500&q=80',
         'matchScore': '81% Match',
       },
       {
         'title': 'Dewy highlighter glow',
         'brand': 'Forme Make-up',
-        'price': '₹1,800',
-        'imageUrl':
-            'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?auto=format&fit=crop&w=500&q=80',
+        'price': '\$1,800',
+        'imageUrl': 'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?auto=format&fit=crop&w=500&q=80',
         'matchScore': '78% Match',
       },
     ],
@@ -141,49 +140,43 @@ class _ThirteenthScreenState extends State<ThirteenthScreen> {
       {
         'title': 'Sculpted gold hoops',
         'brand': 'Forme Studio',
-        'price': '₹850',
-        'imageUrl':
-            'https://images.unsplash.com/photo-1630019852942-f89202989a59?auto=format&fit=crop&w=500&q=80',
+        'price': '\$850',
+        'imageUrl': 'https://images.unsplash.com/photo-1630019852942-f89202989a59?auto=format&fit=crop&w=500&q=80',
         'matchScore': '99% Match',
       },
       {
         'title': 'Layered chain necklace',
         'brand': 'Aura Jewels',
-        'price': '₹3,400',
-        'imageUrl':
-            'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=500&q=80',
+        'price': '\$3,400',
+        'imageUrl': 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=500&q=80',
         'matchScore': '95% Match',
       },
       {
         'title': 'Signet statement ring',
         'brand': 'Forme Studio',
-        'price': '₹1,500',
-        'imageUrl':
-            'https://images.unsplash.com/photo-1603561591411-07134e71a2a9?auto=format&fit=crop&w=500&q=80',
+        'price': '\$1,500',
+        'imageUrl': 'https://images.unsplash.com/photo-1603561591411-07134e71a2a9?auto=format&fit=crop&w=500&q=80',
         'matchScore': '90% Match',
       },
       {
         'title': 'Pearl drop earrings',
         'brand': 'Aura Jewels',
-        'price': '₹2,600',
-        'imageUrl':
-            'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=500&q=80',
+        'price': '\$2,600',
+        'imageUrl': 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=500&q=80',
         'matchScore': '86% Match',
       },
       {
         'title': 'Geometric cuff bracelet',
         'brand': 'Forme Studio',
-        'price': '₹1,900',
-        'imageUrl':
-            'https://images.unsplash.com/photo-1611591475271-18e472620a23?auto=format&fit=crop&w=500&q=80',
+        'price': '\$1,900',
+        'imageUrl': 'https://images.unsplash.com/photo-1611591475271-18e472620a23?auto=format&fit=crop&w=500&q=80',
         'matchScore': '82% Match',
       },
       {
         'title': 'Delicate pavé band',
         'brand': 'Aura Jewels',
-        'price': '₹2,200',
-        'imageUrl':
-            'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=500&q=80',
+        'price': '\$2,200',
+        'imageUrl': 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=500&q=80',
         'matchScore': '77% Match',
       },
     ],
@@ -193,6 +186,90 @@ class _ThirteenthScreenState extends State<ThirteenthScreen> {
   void initState() {
     super.initState();
     _searchController.addListener(_onSearchChanged);
+    _loadCatalog();
+  }
+
+  Future<void> _loadCatalog() async {
+    setState(() {
+      _isCatalogLoading = true;
+      _catalogError = null;
+    });
+    try {
+      final products = await EvoqeApi.fetchProducts();
+      if (!mounted) return;
+      setState(() {
+        _productsById
+          ..clear()
+          ..addEntries(
+            products.map((product) => MapEntry(product.id, product)),
+          );
+        _categoryProducts.clear();
+        for (var index = 0; index < _categories.length; index++) {
+          _categoryProducts[index] = products
+              .where((product) => _matchesCategory(product, index))
+              .map((product) => product.toDiscoverCard())
+              .toList();
+        }
+        _isCatalogLoading = false;
+      });
+    } on EvoqeApiException catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _categoryProducts.clear();
+        _isCatalogLoading = false;
+        _catalogError = error.message;
+      });
+    } on FormatException catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _categoryProducts.clear();
+        _isCatalogLoading = false;
+        _catalogError = 'The catalog response could not be read: $error';
+      });
+    }
+  }
+
+  bool _matchesCategory(CatalogProduct product, int categoryIndex) {
+    final productType = product.productType.trim().toLowerCase();
+    switch (categoryIndex) {
+      case 0:
+        const outfitTypes = {
+          'blazers',
+          'hoodies',
+          'jackets',
+          'jeans',
+          'joggers',
+          'polo shirts',
+          'shirts',
+          'shorts',
+          'sweaters',
+          't-shirts',
+          'trousers',
+          'blouses',
+          'bodysuits',
+          'cardigans',
+          'dresses',
+          'jumpsuits',
+          'overalls',
+          'skirts',
+          'tops',
+        };
+        return outfitTypes.contains(productType);
+      case 1:
+        return productType == 'bags';
+      case 2:
+        return productType == 'scarves';
+      case 3:
+        return productType == 'hats';
+      case 4:
+        return productType == 'shoes';
+      case 5:
+        return product.isMakeup;
+      case 6:
+        return product.isJewelry;
+      default:
+        return false;
+    }
   }
 
   void _onSearchChanged() {
@@ -226,7 +303,10 @@ class _ThirteenthScreenState extends State<ThirteenthScreen> {
       builder: (ctx) {
         return SafeArea(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 20.0,
+              vertical: 20.0,
+            ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -270,7 +350,11 @@ class _ThirteenthScreenState extends State<ThirteenthScreen> {
                       color: const Color(0xFFEFECE4),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Icon(Icons.camera_alt_outlined, color: Color(0xFF201D19), size: 20),
+                    child: const Icon(
+                      Icons.camera_alt_outlined,
+                      color: Color(0xFF201D19),
+                      size: 20,
+                    ),
                   ),
                   title: const Text(
                     'Take a Photo',
@@ -298,7 +382,11 @@ class _ThirteenthScreenState extends State<ThirteenthScreen> {
                       color: const Color(0xFFEFECE4),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Icon(Icons.photo_library_outlined, color: Color(0xFF201D19), size: 20),
+                    child: const Icon(
+                      Icons.photo_library_outlined,
+                      color: Color(0xFF201D19),
+                      size: 20,
+                    ),
                   ),
                   title: const Text(
                     'Choose from Gallery',
@@ -326,7 +414,11 @@ class _ThirteenthScreenState extends State<ThirteenthScreen> {
                       color: const Color(0xFFEFECE4),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Icon(Icons.auto_awesome_outlined, color: Color(0xFF201D19), size: 20),
+                    child: const Icon(
+                      Icons.auto_awesome_outlined,
+                      color: Color(0xFF201D19),
+                      size: 20,
+                    ),
                   ),
                   title: const Text(
                     'Try Sample Fashion Image',
@@ -371,14 +463,20 @@ class _ThirteenthScreenState extends State<ThirteenthScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Could not open ${source == ImageSource.camera ? "camera" : "gallery"}. Try sample image.'),
+          content: Text(
+            'Could not open ${source == ImageSource.camera ? "camera" : "gallery"}. Try sample image.',
+          ),
           backgroundColor: const Color(0xFF201D19),
         ),
       );
     }
   }
 
-  Future<void> _processVisualSearch({File? imageFile, String? sampleUrl, String? sampleName}) async {
+  Future<void> _processVisualSearch({
+    File? imageFile,
+    String? sampleUrl,
+    String? sampleName,
+  }) async {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -401,7 +499,9 @@ class _ThirteenthScreenState extends State<ThirteenthScreen> {
                 child: const Center(
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF201D19)),
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      Color(0xFF201D19),
+                    ),
                   ),
                 ),
               ),
@@ -439,13 +539,16 @@ class _ThirteenthScreenState extends State<ThirteenthScreen> {
     setState(() {
       _visualSearchFile = imageFile;
       _visualSearchSampleUrl = sampleUrl;
-      _visualSearchTitle = sampleName ?? (imageFile != null ? 'Uploaded Photo' : 'Visual Match');
+      _visualSearchTitle =
+          sampleName ?? (imageFile != null ? 'Uploaded Photo' : 'Visual Match');
       _isVisualSearchActive = true;
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Visual match complete! Showing catalog recommendations.'),
+        content: Text(
+          'Visual match complete! Showing catalog recommendations.',
+        ),
         duration: Duration(seconds: 2),
         backgroundColor: Color(0xFF201D19),
       ),
@@ -453,7 +556,7 @@ class _ThirteenthScreenState extends State<ThirteenthScreen> {
   }
 
   List<Map<String, String>> _getFilteredProducts() {
-    final rawProducts = _categoryProducts[_selectedCategoryIndex] ?? _categoryProducts[0]!;
+    final rawProducts = _categoryProducts[_selectedCategoryIndex] ?? [];
     final query = _searchController.text.trim().toLowerCase();
 
     if (query.isEmpty || _isVisualSearchActive) {
@@ -475,7 +578,7 @@ class _ThirteenthScreenState extends State<ThirteenthScreen> {
     if (query.isNotEmpty) {
       return '$resultCount results for "$query"';
     }
-    return '24 illustrative pieces';
+    return '$resultCount catalog products';
   }
 
   @override
@@ -496,7 +599,9 @@ class _ThirteenthScreenState extends State<ThirteenthScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const SizedBox(width: 24), // Empty space balancing shopping bag
+                  const SizedBox(
+                    width: 24,
+                  ), // Empty space balancing shopping bag
                   const EvoqeHeaderLogo(),
                   IconButton(
                     icon: const Icon(
@@ -504,7 +609,7 @@ class _ThirteenthScreenState extends State<ThirteenthScreen> {
                       color: Color(0xFF201D19),
                       size: 22,
                     ),
-                    onPressed: () {},
+                    onPressed: () => openShoppingBag(context),
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
                   ),
@@ -544,10 +649,7 @@ class _ThirteenthScreenState extends State<ThirteenthScreen> {
               // Search Box Field with Camera Option inside
               TextField(
                 controller: _searchController,
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Color(0xFF201D19),
-                ),
+                style: const TextStyle(fontSize: 14, color: Color(0xFF201D19)),
                 decoration: InputDecoration(
                   hintText: _isVisualSearchActive
                       ? 'Visual match search active...'
@@ -570,7 +672,8 @@ class _ThirteenthScreenState extends State<ThirteenthScreen> {
                   suffixIcon: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      if (_searchController.text.isNotEmpty || _isVisualSearchActive)
+                      if (_searchController.text.isNotEmpty ||
+                          _isVisualSearchActive)
                         IconButton(
                           icon: const Icon(
                             Icons.close_rounded,
@@ -625,7 +728,10 @@ class _ThirteenthScreenState extends State<ThirteenthScreen> {
               if (_isVisualSearchActive) ...[
                 const SizedBox(height: 10),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFEFECE4),
                     borderRadius: BorderRadius.circular(6),
@@ -643,18 +749,22 @@ class _ThirteenthScreenState extends State<ThirteenthScreen> {
                                 fit: BoxFit.cover,
                               )
                             : (_visualSearchSampleUrl != null
-                                ? Image.network(
-                                    _visualSearchSampleUrl!,
-                                    width: 36,
-                                    height: 36,
-                                    fit: BoxFit.cover,
-                                  )
-                                : Container(
-                                    width: 36,
-                                    height: 36,
-                                    color: const Color(0xFFCDC6BA),
-                                    child: const Icon(Icons.camera_alt, size: 20, color: Color(0xFF201D19)),
-                                  )),
+                                  ? Image.network(
+                                      _visualSearchSampleUrl!,
+                                      width: 36,
+                                      height: 36,
+                                      fit: BoxFit.cover,
+                                    )
+                                  : Container(
+                                      width: 36,
+                                      height: 36,
+                                      color: const Color(0xFFCDC6BA),
+                                      child: const Icon(
+                                        Icons.camera_alt,
+                                        size: 20,
+                                        color: Color(0xFF201D19),
+                                      ),
+                                    )),
                       ),
                       const SizedBox(width: 10),
                       Expanded(
@@ -663,7 +773,11 @@ class _ThirteenthScreenState extends State<ThirteenthScreen> {
                           children: [
                             const Row(
                               children: [
-                                Icon(Icons.auto_awesome, size: 12, color: Color(0xFF201D19)),
+                                Icon(
+                                  Icons.auto_awesome,
+                                  size: 12,
+                                  color: Color(0xFF201D19),
+                                ),
                                 SizedBox(width: 4),
                                 Text(
                                   'VISUAL MATCH ACTIVE',
@@ -829,12 +943,45 @@ class _ThirteenthScreenState extends State<ThirteenthScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildProductGrid(filteredProducts),
+                      if (_isCatalogLoading)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 48),
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              color: Color(0xFF3E3129),
+                            ),
+                          ),
+                        )
+                      else if (_catalogError != null)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 40),
+                          child: Center(
+                            child: Column(
+                              children: [
+                                Text(
+                                  _catalogError!,
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    color: Color(0xFF5A544D),
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                OutlinedButton(
+                                  onPressed: _loadCatalog,
+                                  child: const Text('Retry'),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
+                      else
+                        _buildProductGrid(filteredProducts),
                       const SizedBox(height: 12),
                       Text(
                         _isVisualSearchActive
                             ? 'Visual similarity matches · Powered by EVOQE Style AI'
-                            : 'Illustrative products · sample prices',
+                            : 'Live products from your connected Shopify stores',
                         style: const TextStyle(
                           fontSize: 11,
                           color: Color(0xFF888077),
@@ -842,7 +989,7 @@ class _ThirteenthScreenState extends State<ThirteenthScreen> {
                       ),
                       const SizedBox(height: 16),
                       const Text(
-                        'Illustrative products from fictional retailers. Sample prices, not live inventory.',
+                        'Availability and pricing are synced from Shopify and can change at checkout.',
                         style: TextStyle(
                           fontSize: 11,
                           color: Color(0xFF888077),
@@ -863,12 +1010,7 @@ class _ThirteenthScreenState extends State<ThirteenthScreen> {
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
           color: Color(0xFFF5F3EC),
-          border: Border(
-            top: BorderSide(
-              color: Color(0xFFD6CFC4),
-              width: 1.0,
-            ),
-          ),
+          border: Border(top: BorderSide(color: Color(0xFFD6CFC4), width: 1.0)),
         ),
         padding: const EdgeInsets.symmetric(vertical: 8.0),
         child: SafeArea(
@@ -919,7 +1061,11 @@ class _ThirteenthScreenState extends State<ThirteenthScreen> {
         alignment: Alignment.center,
         child: Column(
           children: [
-            const Icon(Icons.search_off_rounded, size: 40, color: Color(0xFF888077)),
+            const Icon(
+              Icons.search_off_rounded,
+              size: 40,
+              color: Color(0xFF888077),
+            ),
             const SizedBox(height: 12),
             Text(
               'No matching pieces found for "${_searchController.text}"',
@@ -932,10 +1078,7 @@ class _ThirteenthScreenState extends State<ThirteenthScreen> {
             const SizedBox(height: 6),
             const Text(
               'Try adjusting your query or use Camera Visual Match',
-              style: TextStyle(
-                fontSize: 12,
-                color: Color(0xFF888077),
-              ),
+              style: TextStyle(fontSize: 12, color: Color(0xFF888077)),
             ),
           ],
         ),
@@ -964,10 +1107,7 @@ class _ThirteenthScreenState extends State<ThirteenthScreen> {
       rows.add(const SizedBox(height: 20));
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: rows,
-    );
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: rows);
   }
 
   Widget _buildDiscoverProductCard(Map<String, String> product) {
@@ -1011,7 +1151,10 @@ class _ThirteenthScreenState extends State<ThirteenthScreen> {
                     top: 8,
                     left: 8,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 7,
+                        vertical: 3,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFF201D19).withOpacity(0.88),
                         borderRadius: BorderRadius.circular(3),
@@ -1079,10 +1222,7 @@ class _ThirteenthScreenState extends State<ThirteenthScreen> {
         const SizedBox(height: 2),
         Text(
           brand,
-          style: const TextStyle(
-            fontSize: 11.5,
-            color: Color(0xFF888077),
-          ),
+          style: const TextStyle(fontSize: 11.5, color: Color(0xFF888077)),
         ),
         const SizedBox(height: 6),
         Row(
@@ -1098,20 +1238,25 @@ class _ThirteenthScreenState extends State<ThirteenthScreen> {
             ),
             GestureDetector(
               onTap: () {
-                if (_selectedCategoryIndex == 1) {
-                  // Make-up -> EleventhScreen
+                final productId = int.tryParse(product['id'] ?? '');
+                final catalogProduct = productId == null
+                    ? null
+                    : _productsById[productId];
+                if (catalogProduct?.isMakeup ?? _selectedCategoryIndex == 5) {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const EleventhScreen(),
+                      builder: (context) =>
+                          EleventhScreen(product: catalogProduct),
                     ),
                   );
-                } else if (_selectedCategoryIndex == 2) {
-                  // Jewlery -> TenthScreen
+                } else if (catalogProduct?.isJewelry ??
+                    _selectedCategoryIndex == 6) {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const TenthScreen(),
+                      builder: (context) =>
+                          TenthScreen(product: catalogProduct),
                     ),
                   );
                 } else {
@@ -1119,7 +1264,8 @@ class _ThirteenthScreenState extends State<ThirteenthScreen> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const NinthScreen(),
+                      builder: (context) =>
+                          NinthScreen(product: catalogProduct),
                     ),
                   );
                 }
@@ -1156,7 +1302,9 @@ class _ThirteenthScreenState extends State<ThirteenthScreen> {
     String label,
   ) {
     final isSelected = index == _selectedBottomNavIndex;
-    final color = isSelected ? const Color(0xFF201D19) : const Color(0xFF888077);
+    final color = isSelected
+        ? const Color(0xFF201D19)
+        : const Color(0xFF888077);
 
     return InkWell(
       onTap: () {
@@ -1170,16 +1318,12 @@ class _ThirteenthScreenState extends State<ThirteenthScreen> {
         } else if (index == 2) {
           Navigator.push(
             context,
-            MaterialPageRoute(
-              builder: (context) => const FifteenthScreen(),
-            ),
+            MaterialPageRoute(builder: (context) => const FifteenthScreen()),
           );
         } else if (index == 3) {
           Navigator.push(
             context,
-            MaterialPageRoute(
-              builder: (context) => const EighteenthScreen(),
-            ),
+            MaterialPageRoute(builder: (context) => const EighteenthScreen()),
           );
         } else if (index == 4) {
           Navigator.push(
@@ -1197,11 +1341,7 @@ class _ThirteenthScreenState extends State<ThirteenthScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            isSelected ? selectedIcon : icon,
-            size: 22,
-            color: color,
-          ),
+          Icon(isSelected ? selectedIcon : icon, size: 22, color: color),
           const SizedBox(height: 4),
           Text(
             label,

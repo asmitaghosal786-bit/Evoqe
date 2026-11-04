@@ -1,9 +1,21 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../models/catalog_product.dart';
+import '../services/cart_actions.dart';
+import '../services/evoqe_api.dart';
+import '../state/session_state.dart';
 import 'welcome_screen.dart';
 import 'fashion_try_on.dart';
+import 'jewelry_try_on.dart';
+import 'makeup_try_on.dart';
 
 class SeventeenthScreen extends StatefulWidget {
-  const SeventeenthScreen({super.key});
+  const SeventeenthScreen({super.key, this.result});
+
+  final LookbookApiResult? result;
 
   @override
   State<SeventeenthScreen> createState() => _SeventeenthScreenState();
@@ -12,27 +24,47 @@ class SeventeenthScreen extends StatefulWidget {
 class _SeventeenthScreenState extends State<SeventeenthScreen> {
   int _selectedFilterIndex = 0; // "Looks" active
   final Set<String> _bookmarkedLookTitles = {};
+  late LookbookApiResult? _result = widget.result;
+  bool _isRegenerating = false;
+  String? _generationError;
 
-  final List<String> _filterTabs = const [
-    'Looks',
-    'Colors',
-    'Price range',
-  ];
+  final List<String> _filterTabs = const ['Looks', 'Colors', 'Price range'];
 
-  static const List<Map<String, String>> _lookCards = [
-    {
-      'title': 'The coordinated look',
-      'description': 'Ivory tailoring. Warm gold. Six coordinated pieces.',
-      'imageUrl':
-          'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=500&q=80',
-    },
-    {
-      'title': 'Clothing Piece',
-      'description': 'Soft drape and a clean, modern silhouette.',
-      'imageUrl':
-          'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=500&q=80',
-    },
-  ];
+  Future<void> _regenerateLookbook() async {
+    final draft = context.read<SessionState>().currentDraft;
+    final imagePath = draft.references
+        .where((reference) => reference.imagePath.isNotEmpty)
+        .map((reference) => reference.imagePath)
+        .firstOrNull;
+    if (imagePath == null && draft.aestheticDescription.trim().isEmpty) {
+      setState(() {
+        _generationError = 'Add a reference image or description first.';
+      });
+      return;
+    }
+
+    setState(() {
+      _isRegenerating = true;
+      _generationError = null;
+    });
+    try {
+      final result = await EvoqeApi.analyzeLookbook(
+        description: draft.aestheticDescription,
+        image: imagePath == null ? null : File(imagePath),
+      );
+      if (mounted) setState(() => _result = result);
+    } on EvoqeApiException catch (error) {
+      if (mounted) setState(() => _generationError = error.message);
+    } on FileSystemException catch (error) {
+      if (mounted) {
+        setState(
+          () => _generationError = 'Could not read the selected image: $error',
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isRegenerating = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -73,7 +105,7 @@ class _SeventeenthScreenState extends State<SeventeenthScreen> {
                         color: Color(0xFF201D19),
                         size: 22,
                       ),
-                      onPressed: () {},
+                      onPressed: () => openShoppingBag(context),
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
                     ),
@@ -83,7 +115,7 @@ class _SeventeenthScreenState extends State<SeventeenthScreen> {
                 const SizedBox(height: 24),
 
                 // Eyebrow Label
-                const Text(
+                Text(
                   'THE EVOQE LOOKBOOK',
                   style: TextStyle(
                     fontFamily: 'serif',
@@ -111,12 +143,11 @@ class _SeventeenthScreenState extends State<SeventeenthScreen> {
                 const SizedBox(height: 6),
 
                 // Subtitle
-                const Text(
-                  'Demo generated results · based on sample references',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF888077),
-                  ),
+                Text(
+                  _result == null
+                      ? 'Generate a lookbook from your references and style notes.'
+                      : 'AI-curated from your references and current Shopify catalog.',
+                  style: TextStyle(fontSize: 12, color: Color(0xFF888077)),
                 ),
 
                 const SizedBox(height: 20),
@@ -168,26 +199,83 @@ class _SeventeenthScreenState extends State<SeventeenthScreen> {
 
                 const SizedBox(height: 20),
 
-                // 2 Column Generated Look Cards Grid
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(child: _buildLookCard(_lookCards[0])),
-                    const SizedBox(width: 14),
-                    Expanded(child: _buildLookCard(_lookCards[1])),
-                  ],
-                ),
+                if (_result != null) ...[
+                  Text(
+                    _result!.summary,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      height: 1.4,
+                      color: Color(0xFF6E6760),
+                    ),
+                  ),
+                  if (_result!.aesthetics.isNotEmpty ||
+                      _result!.colors.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 10),
+                      child: Text(
+                        [
+                          ..._result!.aesthetics,
+                          ..._result!.colors,
+                        ].join(' · '),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF888077),
+                        ),
+                      ),
+                    ),
+                  const SizedBox(height: 18),
+                  if (_result!.products.isEmpty)
+                    const Text(
+                      'No matching products are in the connected catalog yet.',
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        color: Color(0xFF888077),
+                      ),
+                    )
+                  else
+                    for (
+                      var index = 0;
+                      index < _result!.products.length;
+                      index += 2
+                    )
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: _buildLookCard(_result!.products[index]),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: index + 1 < _result!.products.length
+                                  ? _buildLookCard(_result!.products[index + 1])
+                                  : const SizedBox.shrink(),
+                            ),
+                          ],
+                        ),
+                      ),
+                ],
+                if (_generationError != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 12),
+                    child: Text(
+                      _generationError!,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF8A4F32),
+                      ),
+                    ),
+                  ),
 
                 const SizedBox(height: 20),
-
-
 
                 // Refine My Lookbook Outlined Button
                 SizedBox(
                   width: double.infinity,
                   height: 50,
                   child: OutlinedButton(
-                    onPressed: () {},
+                    onPressed: _isRegenerating ? null : _regenerateLookbook,
                     style: OutlinedButton.styleFrom(
                       backgroundColor: const Color(0xFFEFECE4),
                       foregroundColor: const Color(0xFF201D19),
@@ -200,14 +288,20 @@ class _SeventeenthScreenState extends State<SeventeenthScreen> {
                       ),
                       elevation: 0,
                     ),
-                    child: const Text(
-                      'Regenerate My Lookbook',
-                      style: TextStyle(
-                        fontSize: 14.5,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF201D19),
-                      ),
-                    ),
+                    child: _isRegenerating
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Text(
+                            'Regenerate My Lookbook',
+                            style: TextStyle(
+                              fontSize: 14.5,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF201D19),
+                            ),
+                          ),
                   ),
                 ),
 
@@ -220,10 +314,14 @@ class _SeventeenthScreenState extends State<SeventeenthScreen> {
     );
   }
 
-  Widget _buildLookCard(Map<String, String> look) {
-    final title = look['title']!;
-    final description = look['description']!;
-    final imageUrl = look['imageUrl']!;
+  Widget _buildLookCard(CatalogProduct product) {
+    final title = product.title;
+    final description = [
+      product.vendor,
+      product.productType,
+      product.formattedPrice,
+    ].where((part) => part.isNotEmpty).join(' · ');
+    final imageUrl = product.imageUrl;
     final isBookmarked = _bookmarkedLookTitles.contains(title);
 
     return Column(
@@ -240,20 +338,28 @@ class _SeventeenthScreenState extends State<SeventeenthScreen> {
             child: Stack(
               children: [
                 Positioned.fill(
-                  child: Image.network(
-                    imageUrl,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Container(
-                      color: const Color(0xFFDDD7CC),
-                      child: const Center(
-                        child: Icon(
-                          Icons.person_outline_rounded,
-                          size: 36,
-                          color: Color(0xFF8C8278),
+                  child: imageUrl == null
+                      ? Container(
+                          color: const Color(0xFFDDD7CC),
+                          child: const Center(
+                            child: Icon(Icons.image_outlined, size: 36),
+                          ),
+                        )
+                      : Image.network(
+                          imageUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) =>
+                              Container(
+                                color: const Color(0xFFDDD7CC),
+                                child: const Center(
+                                  child: Icon(
+                                    Icons.person_outline_rounded,
+                                    size: 36,
+                                    color: Color(0xFF8C8278),
+                                  ),
+                                ),
+                              ),
                         ),
-                      ),
-                    ),
-                  ),
                 ),
                 Positioned(
                   top: 10,
@@ -314,7 +420,11 @@ class _SeventeenthScreenState extends State<SeventeenthScreen> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => const NinthScreen(),
+                builder: (context) => product.isMakeup
+                    ? EleventhScreen(product: product)
+                    : product.isJewelry
+                    ? TenthScreen(product: product)
+                    : NinthScreen(product: product),
               ),
             );
           },

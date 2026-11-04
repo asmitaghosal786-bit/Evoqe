@@ -1,20 +1,14 @@
-import 'package:bcrypt/bcrypt.dart';
-import 'package:flutter/foundation.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../data/local_db/account_store.dart';
+import '../data/local_db/profile_store.dart';
 import '../models/user_profile.dart';
 
-/// Supported social authentication providers.
-enum SocialProvider { google, apple }
-
-/// Shared validation rules so screens and services never drift apart.
 class Validators {
   static final _emailRegex = RegExp(r'^[\w-.]+@([\w-]+\.)+[\w-]{2,}$');
 
   static bool isValidEmail(String email) =>
       email.trim().isNotEmpty && _emailRegex.hasMatch(email.trim());
 
-  /// Returns an error message, or null if the password is acceptable.
   static String? newPassword(String password) {
     if (password.length < 8 || !password.contains(RegExp(r'\d'))) {
       return 'Password must be at least 8 characters and include a number';
@@ -23,16 +17,15 @@ class Validators {
   }
 }
 
-/// Result of an auth action. [error] == null means success.
 class AuthResult {
   final String? error;
   final UserProfile? profile;
   final bool hasCompletedOnboarding;
 
   const AuthResult.failure(String message)
-      : error = message,
-        profile = null,
-        hasCompletedOnboarding = false;
+    : error = message,
+      profile = null,
+      hasCompletedOnboarding = false;
 
   const AuthResult.success({
     required UserProfile this.profile,
@@ -42,41 +35,22 @@ class AuthResult {
   bool get ok => error == null;
 }
 
-// Top-level so they can run in a background isolate via compute().
-String _hashPassword(String password) =>
-    BCrypt.hashpw(password, BCrypt.gensalt());
-bool _checkPassword(List<String> args) => BCrypt.checkpw(args[0], args[1]);
-
-/// Auth actions only. Holds no UI state. Swap the AccountStore calls for
-/// API calls when a backend exists.
 class AuthService {
-  AuthService(this._accounts);
+  AuthService(this._client, this._profiles);
 
-  final AccountStore _accounts;
+  static const authCallbackUrl = 'com.example.evoqe://auth-callback';
 
-  static String _normalize(String email) => email.trim().toLowerCase();
+  final SupabaseClient _client;
+  final ProfileStore _profiles;
 
-  /// Debug-only demo account. Never ships in release builds.
-  Future<void> seedDemoAccount() async {
-    if (!kDebugMode) return;
-    const email = 'demo@evoqe.com';
-    if (await _accounts.find(email) != null) return;
-    final profile = UserProfile(name: 'Demo User', email: email);
-    await _accounts.insert(AccountRecord(
-      email: email,
-      passwordHash: await compute(_hashPassword, 'Demo1234'),
-      profile: profile.toJson(),
-      hasCompletedOnboarding: true,
-    ));
-  }
+  String? get currentUserId => _client.auth.currentUser?.id;
 
-  Future<bool> accountExists(String email) async =>
-      await _accounts.find(_normalize(email)) != null;
+  Stream<AuthState> get authStateChanges => _client.auth.onAuthStateChange;
 
-  /// Used to restore a session on app start.
-  Future<AuthResult?> getSession(String email) async {
-    final record = await _accounts.find(_normalize(email));
-    return record == null ? null : _toResult(record);
+  Future<AuthResult?> getSession() async {
+    final user = _client.auth.currentUser;
+    if (user == null || _client.auth.currentSession == null) return null;
+    return _toResult(user);
   }
 
   Future<AuthResult> signUp({
@@ -87,102 +61,114 @@ class AuthService {
     final passwordError = Validators.newPassword(password);
     if (passwordError != null) return AuthResult.failure(passwordError);
 
-    final key = _normalize(email);
-    if (await _accounts.existsRaw(key)) {
-      final existing = await _accounts.find(key);
-      if (existing != null) {
+    try {
+      final response = await _client.auth.signUp(
+        email: email.trim().toLowerCase(),
+        password: password,
+        data: {'full_name': name.trim()},
+      );
+      final user = response.user;
+      if (user == null || response.session == null) {
         return const AuthResult.failure(
-            'An account with this email already exists.');
-      } else {
-        await _accounts.delete(key);
+          'Sign-up did not start a session. Disable email confirmation in '
+          'Supabase Auth settings to allow immediate sign-in.',
+        );
       }
+      return await _toResult(user, fallbackName: name.trim());
+    } on AuthException catch (error) {
+      return AuthResult.failure(error.message);
     }
-
-    final profile = UserProfile(name: name.trim(), email: email.trim());
-    final record = AccountRecord(
-      email: key,
-      passwordHash: await compute(_hashPassword, password),
-      profile: profile.toJson(),
-    );
-
-    final inserted = await _accounts.insert(record);
-    if (!inserted) {
-      return const AuthResult.failure(
-          'An account with this email already exists.');
-    }
-    return _toResult(record);
   }
 
   Future<AuthResult> logIn({
     required String email,
     required String password,
   }) async {
-    const generic = 'Invalid email or password';
-    final record = await _accounts.find(_normalize(email));
-    final hash = record?.passwordHash;
-    if (record == null || hash == null) {
-      return const AuthResult.failure(generic);
-    }
-    final matches = await compute(_checkPassword, [password, hash]);
-    if (!matches) return const AuthResult.failure(generic);
-    return _toResult(record);
-  }
-
-  // TODO(auth): replace with google_sign_in / sign_in_with_apple + backend
-  // token exchange. Right now this trusts the name/email it is given.
-  Future<AuthResult> signInWithProvider({
-    required SocialProvider provider,
-    required String name,
-    required String email,
-  }) async {
-    final key = _normalize(email);
-    final existing = await _accounts.find(key);
-    if (existing != null) {
-      if (existing.passwordHash != null && existing.socialProvider == null) {
-        return const AuthResult.failure(
-            'This email is registered with a password. Please log in with your password.');
+    try {
+      final response = await _client.auth.signInWithPassword(
+        email: email.trim().toLowerCase(),
+        password: password,
+      );
+      final user = response.user;
+      if (user == null || response.session == null) {
+        return const AuthResult.failure('Invalid email or password.');
       }
-      return _toResult(existing);
+      return await _toResult(user);
+    } on AuthException catch (error) {
+      return AuthResult.failure(error.message);
     }
+  }
 
-    final profile = UserProfile(name: name.trim(), email: email.trim());
-    final record = AccountRecord(
-      email: key,
+  Future<String?> resetPassword({required String email}) async {
+    try {
+      await _client.auth.resetPasswordForEmail(
+        email.trim().toLowerCase(),
+        redirectTo: authCallbackUrl,
+      );
+      return null;
+    } on AuthException catch (error) {
+      return error.message;
+    }
+  }
+
+  Future<String?> updatePassword(String password) async {
+    final passwordError = Validators.newPassword(password);
+    if (passwordError != null) return passwordError;
+    try {
+      await _client.auth.updateUser(UserAttributes(password: password));
+      return null;
+    } on AuthException catch (error) {
+      return error.message;
+    }
+  }
+
+  Future<void> signOut() => _client.auth.signOut();
+
+  Future<void> markOnboardingComplete(String userId) async {
+    final existing = await _profiles.find(userId);
+    if (existing == null) return;
+    await _profiles.save(
+      userId: userId,
+      profile: existing.profile,
+      hasCompletedOnboarding: true,
+    );
+  }
+
+  Future<void> saveProfile(UserProfile profile) async {
+    final user = _client.auth.currentUser;
+    if (user == null) return;
+    final existing = await _profiles.find(user.id);
+    await _profiles.save(
+      userId: user.id,
       profile: profile.toJson(),
-      socialProvider: provider.name,
+      hasCompletedOnboarding: existing?.hasCompletedOnboarding ?? false,
     );
-    await _accounts.insert(record);
-    return _toResult(record);
   }
 
-  // TODO(auth): real flow = backend emails a reset link/code.
-  /// Returns an error message, or null on success.
-  Future<String?> resetPassword({
-    required String email,
-    required String newPassword,
-  }) async {
-    final key = _normalize(email);
-    if (await _accounts.find(key) == null) {
-      return 'No account found for this email';
+  Future<AuthResult> _toResult(User user, {String? fallbackName}) async {
+    final stored = await _profiles.find(user.id);
+    if (stored != null) {
+      return AuthResult.success(
+        profile: UserProfile.fromJson(stored.profile),
+        hasCompletedOnboarding: stored.hasCompletedOnboarding,
+      );
     }
-    final error = Validators.newPassword(newPassword);
-    if (error != null) return error;
 
-    await _accounts.updatePasswordHash(
-      key,
-      await compute(_hashPassword, newPassword),
+    final email = user.email ?? '';
+    final name = (user.userMetadata?['full_name'] as String?)?.trim();
+    final profile = UserProfile(
+      name: (name?.isNotEmpty == true)
+          ? name!
+          : (fallbackName?.isNotEmpty == true
+                ? fallbackName!
+                : email.split('@').first),
+      email: email,
     );
-    return null;
+    await _profiles.save(
+      userId: user.id,
+      profile: profile.toJson(),
+      hasCompletedOnboarding: false,
+    );
+    return AuthResult.success(profile: profile, hasCompletedOnboarding: false);
   }
-
-  Future<void> markOnboardingComplete(String email) =>
-      _accounts.setOnboardingCompleted(_normalize(email));
-
-  Future<void> saveProfile(UserProfile profile) =>
-      _accounts.updateProfile(_normalize(profile.email), profile.toJson());
-
-  AuthResult _toResult(AccountRecord record) => AuthResult.success(
-    profile: UserProfile.fromJson(record.profile),
-    hasCompletedOnboarding: record.hasCompletedOnboarding,
-  );
 }

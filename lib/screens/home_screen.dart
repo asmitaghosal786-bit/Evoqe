@@ -308,7 +308,7 @@ class _EighthScreenState extends State<EighthScreen> {
                     imageUrl: _waistcoatImageUrl,
                     title: 'Linen waistcoat',
                     brand: 'Maison Vale · sample',
-                    price: '₹2,400',
+                    price: '\$2,400',
                     isSaved: _isWaistcoatSaved,
                     onSavedToggle: () {
                       setState(() {
@@ -331,7 +331,7 @@ class _EighthScreenState extends State<EighthScreen> {
                     imageUrl: _earringsImageUrl,
                     title: 'Sculpted gold hoops',
                     brand: 'Forme Studio · sample',
-                    price: '₹850',
+                    price: '\$850',
                     isSaved: _isEarringsSaved,
                     onSavedToggle: () {
                       setState(() {

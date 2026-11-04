@@ -1,6 +1,8 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../state/session_state.dart';
 import 'welcome_screen.dart';
 import 'home_screen.dart';
@@ -68,10 +70,7 @@ class _SplashScreenState extends State<SplashScreen> {
         transitionDuration: const Duration(milliseconds: 400),
         pageBuilder: (context, animation, secondaryAnimation) => nextScreen,
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          return FadeTransition(
-            opacity: animation,
-            child: child,
-          );
+          return FadeTransition(opacity: animation, child: child);
         },
       ),
     );
@@ -90,18 +89,13 @@ class _SplashScreenState extends State<SplashScreen> {
               child: Image.network(
                 _backgroundImageUrl,
                 fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => Container(
-                  color: const Color(0xFFEFECE4),
-                ),
+                errorBuilder: (context, error, stackTrace) =>
+                    Container(color: const Color(0xFFEFECE4)),
               ),
             ),
 
             // Light Translucent Overlay for Text Contrast & Warm Vintage Aesthetic
-            Positioned.fill(
-              child: Container(
-                color: const Color(0x73F5F3EC),
-              ),
-            ),
+            Positioned.fill(child: Container(color: const Color(0x73F5F3EC))),
 
             // Main Foreground Content
             SafeArea(

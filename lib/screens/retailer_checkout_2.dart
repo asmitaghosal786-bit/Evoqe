@@ -105,7 +105,7 @@ class TwentyFirstScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 const Text(
-                  '2 items · sample subtotal ₹4,600',
+                  '2 items · sample subtotal \$4,600',
                   style: TextStyle(
                     fontSize: 12.5,
                     color: Color(0xFF888077),
@@ -157,7 +157,7 @@ class TwentyFirstScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 const Text(
-                  '1 item · sample subtotal ₹850',
+                  '1 item · sample subtotal \$850',
                   style: TextStyle(
                     fontSize: 12.5,
                     color: Color(0xFF888077),

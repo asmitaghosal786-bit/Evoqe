@@ -578,7 +578,7 @@ class _EighteenthScreenState extends State<EighteenthScreen> {
 
                 // Saved Outfit Summary Section
                 const Text(
-                  'Saved outfit · 6 Coordinated Pieces · Sample Total ₹9,500',
+                  'Saved outfit · 6 Coordinated Pieces · Sample Total \$9,500',
                   style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w700,

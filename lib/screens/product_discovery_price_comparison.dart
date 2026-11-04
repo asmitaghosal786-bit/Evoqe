@@ -154,7 +154,7 @@ class NineteenthScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 6),
                           const Text(
-                            '₹2,400',
+                            '\$2,400',
                             style: TextStyle(
                               fontSize: 14.5,
                               fontWeight: FontWeight.w600,
@@ -261,13 +261,13 @@ class NineteenthScreen extends StatelessWidget {
                 // Item 1: Linen waistcoat
                 _buildLookItemRow(
                   title: 'Linen waistcoat',
-                  price: '₹2,400',
+                  price: '\$2,400',
                 ),
 
                 // Item 2: Tailored trouser
                 _buildLookItemRow(
                   title: 'Tailored trouser',
-                  price: '₹2,200',
+                  price: '\$2,200',
                 ),
 
                 const SizedBox(height: 20),
@@ -307,7 +307,7 @@ class NineteenthScreen extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      '₹9,500',
+                      '\$9,500',
                       style: TextStyle(
                         fontFamily: 'serif',
                         fontSize: 28,

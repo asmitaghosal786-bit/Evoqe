@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
+
 import '../data/security/photo_picker.dart';
 import '../data/security/secure_media_store.dart';
 import '../state/session_state.dart';
 import '../widgets/secure_image.dart';
+import '../widgets/default_avatar.dart';
+import 'selfie_capture.dart';
 import 'welcome_screen.dart';
 import 'personal_style_questionnaire.dart';
 
 class FourthScreen extends StatefulWidget {
-  const FourthScreen({super.key});
+  const FourthScreen({super.key, this.genderChanged = false});
+
+  final bool genderChanged;
 
   @override
   State<FourthScreen> createState() => _FourthScreenState();
@@ -20,6 +25,8 @@ class _FourthScreenState extends State<FourthScreen> {
 
   static const _slots = ['front', 'left', 'right', 'back'];
   late final Map<String, String?> _photos; // encrypted file names
+  final Set<String> _refreshedSlots = {};
+  bool _hasStalePhotos = false;
   bool _isBusy = false;
 
   @override
@@ -28,10 +35,30 @@ class _FourthScreenState extends State<FourthScreen> {
     final p = context.read<SessionState>().currentUser;
     _photos = {for (final s in _slots) s: p?.bodyPhotoPaths[s]};
     _useAvatarInstead = p?.useAvatarInsteadOfPhoto ?? false;
+    _hasStalePhotos =
+        p?.bodyPhotoGender != null &&
+        p?.bodyPhotoGender != p?.gender &&
+        _photos.values.any((photo) => photo != null);
+    if (widget.genderChanged) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Gender changed. Please update your full-body profile photos and selfie.',
+            ),
+            backgroundColor: Color(0xFF3E3129),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      });
+    }
   }
 
   bool get _canContinue =>
-      _useAvatarInstead || _photos.values.every((p) => p != null);
+      _useAvatarInstead ||
+      (_photos.values.every((p) => p != null) &&
+          (!_hasStalePhotos || _refreshedSlots.length == _slots.length));
 
   double get _progress {
     if (_useAvatarInstead) return 1.0;
@@ -74,7 +101,12 @@ class _FourthScreenState extends State<FourthScreen> {
           .pick(source: source, replacing: _photos[slot]);
       if (name != null) {
         await session.updateProfile((p) => p.bodyPhotoPaths[slot] = name);
-        if (mounted) setState(() => _photos[slot] = name);
+        if (mounted) {
+          setState(() {
+            _photos[slot] = name;
+            _refreshedSlots.add(slot);
+          });
+        }
       }
     } catch (_) {
       if (mounted) {
@@ -105,6 +137,7 @@ class _FourthScreenState extends State<FourthScreen> {
       if (mounted) {
         setState(() {
           _photos[slot] = null;
+          _refreshedSlots.remove(slot);
         });
       }
     } catch (_) {
@@ -142,6 +175,9 @@ class _FourthScreenState extends State<FourthScreen> {
       p.useAvatarInsteadOfPhoto = _useAvatarInstead;
       for (final slot in _slots) {
         p.bodyPhotoPaths[slot] = _photos[slot];
+      }
+      if (!_useAvatarInstead) {
+        p.bodyPhotoGender = p.gender;
       }
     });
 
@@ -339,7 +375,7 @@ class _FourthScreenState extends State<FourthScreen> {
                 // Instruction Text
                 Text(
                   _useAvatarInstead
-                      ? 'Default avatar mode enabled. You can skip photo uploads.'
+                      ? 'Your default avatar follows the gender saved in your style profile.'
                       : 'Upload photos of your 4 profiles (front, left, right, and back)',
                   style: const TextStyle(
                     fontSize: 12.5,
@@ -347,6 +383,34 @@ class _FourthScreenState extends State<FourthScreen> {
                     color: Color(0xFF6E6760),
                   ),
                 ),
+                if (widget.genderChanged)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 10),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Your gender changed. Replace all four profile photos to use them again, or choose the updated default avatar. Please also update your selfie.',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF8A4F32),
+                            height: 1.35,
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const ThirdScreen(),
+                              ),
+                            );
+                          },
+                          child: const Text('Update selfie photo'),
+                        ),
+                      ],
+                    ),
+                  ),
 
                 const SizedBox(height: 16),
 
@@ -432,10 +496,7 @@ class _FourthScreenState extends State<FourthScreen> {
                             ),
                           ),
                           const SizedBox(width: 8),
-                          const Icon(
-                            Icons.arrow_forward_rounded,
-                            size: 18,
-                          ),
+                          const Icon(Icons.arrow_forward_rounded, size: 18),
                         ],
                       ),
                     ),
@@ -451,11 +512,9 @@ class _FourthScreenState extends State<FourthScreen> {
     );
   }
 
-  Widget _buildProfileCard({
-    required String slot,
-    required String title,
-  }) {
+  Widget _buildProfileCard({required String slot, required String title}) {
     final saved = _photos[slot];
+    final gender = context.read<SessionState>().currentUser?.gender;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -472,7 +531,9 @@ class _FourthScreenState extends State<FourthScreen> {
                 Positioned.fill(
                   child: InkWell(
                     onTap: _isBusy ? null : () => _showSourceSheet(slot),
-                    child: saved != null
+                    child: _useAvatarInstead
+                        ? DefaultAvatar(gender: gender, profile: slot)
+                        : saved != null
                         ? SecureImage(
                             fileName: saved,
                             placeholder: const Center(
@@ -492,12 +553,6 @@ class _FourthScreenState extends State<FourthScreen> {
                           ),
                   ),
                 ),
-                if (_useAvatarInstead)
-                  Positioned.fill(
-                    child: Container(
-                      color: const Color(0x66F5F3EC),
-                    ),
-                  ),
                 if (saved != null)
                   Positioned(
                     top: 6,

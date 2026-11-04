@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../services/auth_service.dart';
+
 import '../state/session_state.dart';
 import 'home_screen.dart';
 import 'selfie_capture.dart';
@@ -11,10 +11,7 @@ enum AuthMode { signUp, logIn }
 class SecondScreen extends StatefulWidget {
   final AuthMode initialMode;
 
-  const SecondScreen({
-    super.key,
-    this.initialMode = AuthMode.signUp,
-  });
+  const SecondScreen({super.key, this.initialMode = AuthMode.signUp});
 
   @override
   State<SecondScreen> createState() => _SecondScreenState();
@@ -29,6 +26,7 @@ class _SecondScreenState extends State<SecondScreen> {
   bool _obscurePassword = true;
   bool _isLoading = false;
   bool _hasAttemptedSubmit = false;
+  bool _hasRouted = false;
 
   String? _nameError;
   String? _emailError;
@@ -94,22 +92,19 @@ class _SecondScreenState extends State<SecondScreen> {
   }
 
   void _routeAfterAuth() {
-    if (!mounted) return;
+    if (!mounted || _hasRouted) return;
+    _hasRouted = true;
     final session = context.read<SessionState>();
     if (session.shouldSkipToHome) {
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(
-          builder: (context) => const EighthScreen(),
-        ),
+        MaterialPageRoute(builder: (context) => const EighthScreen()),
         (route) => false,
       );
     } else {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(
-          builder: (context) => const ThirdScreen(),
-        ),
+        MaterialPageRoute(builder: (context) => const ThirdScreen()),
       );
     }
   }
@@ -142,10 +137,7 @@ class _SecondScreenState extends State<SecondScreen> {
         password: password,
       );
     } else {
-      error = await session.logIn(
-        email: email,
-        password: password,
-      );
+      error = await session.logIn(email: email, password: password);
     }
 
     if (!mounted) return;
@@ -162,6 +154,15 @@ class _SecondScreenState extends State<SecondScreen> {
         ),
       );
     } else {
+      if (_mode == AuthMode.signUp) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Account created. You are now signed in.'),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Color(0xFF3E3129),
+          ),
+        );
+      }
       _routeAfterAuth();
     }
   }
@@ -175,16 +176,17 @@ class _SecondScreenState extends State<SecondScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      builder: (context) => _ForgotPasswordSheet(
-        initialEmail: _emailController.text,
-      ),
+      builder: (context) =>
+          _ForgotPasswordSheet(initialEmail: _emailController.text),
     );
 
     if (result == true && mounted) {
       _passwordController.clear();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Password updated. Log in with your new password.'),
+          content: Text(
+            'If that email is registered, a password reset link is on its way.',
+          ),
           behavior: SnackBarBehavior.floating,
           backgroundColor: Color(0xFF3E3129),
         ),
@@ -192,98 +194,15 @@ class _SecondScreenState extends State<SecondScreen> {
     }
   }
 
-  Future<void> _handleGoogleSignIn() async {
-    // TODO(auth): replace with google_sign_in / sign_in_with_apple.
-    if (_isLoading) return;
-
-    final account = await showModalBottomSheet<Map<String, String>>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: const Color(0xFFF5F3EC),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (context) => const _GoogleAccountSheet(),
-    );
-
-    if (account == null || !mounted) return;
-
-    setState(() {
-      _isLoading = true;
-    });
-
-    final session = context.read<SessionState>();
-    final error = await session.signInWithProvider(
-      provider: SocialProvider.google,
-      name: account['name']!,
-      email: account['email']!,
-    );
-
-    if (!mounted) return;
-    setState(() {
-      _isLoading = false;
-    });
-
-    if (error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(error),
-          behavior: SnackBarBehavior.floating,
-          backgroundColor: const Color(0xFF3E3129),
-        ),
-      );
-    } else {
-      _routeAfterAuth();
-    }
-  }
-
-  Future<void> _handleAppleSignIn() async {
-    // TODO(auth): replace with google_sign_in / sign_in_with_apple.
-    if (_isLoading) return;
-
-    final confirmed = await showModalBottomSheet<bool>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: const Color(0xFFF5F3EC),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (context) => const _AppleSignInSheet(),
-    );
-
-    if (confirmed != true || !mounted) return;
-
-    setState(() {
-      _isLoading = true;
-    });
-
-    final session = context.read<SessionState>();
-    final error = await session.signInWithProvider(
-      provider: SocialProvider.apple,
-      name: 'Ananya Sharma',
-      email: 'ananya.sharma@icloud.com',
-    );
-
-    if (!mounted) return;
-    setState(() {
-      _isLoading = false;
-    });
-
-    if (error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(error),
-          behavior: SnackBarBehavior.floating,
-          backgroundColor: const Color(0xFF3E3129),
-        ),
-      );
-    } else {
-      _routeAfterAuth();
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
+    final session = context.watch<SessionState>();
+    if (session.isLoggedIn && !_hasRouted) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _routeAfterAuth();
+      });
+    }
+
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
@@ -348,7 +267,9 @@ class _SecondScreenState extends State<SecondScreen> {
 
                   // Main Headline
                   Text(
-                    _mode == AuthMode.signUp ? 'Make it yours.' : 'Welcome back.',
+                    _mode == AuthMode.signUp
+                        ? 'Make it yours.'
+                        : 'Welcome back.',
                     style: const TextStyle(
                       fontFamily: 'serif',
                       fontSize: 34,
@@ -678,51 +599,6 @@ class _SecondScreenState extends State<SecondScreen> {
                     ),
                   ),
 
-                  const SizedBox(height: 20),
-
-                  // Divider ("OR")
-                  const Row(
-                    children: [
-                      Expanded(
-                        child: Divider(
-                          color: Color(0xFFD6CFC4),
-                          thickness: 1,
-                        ),
-                      ),
-                      Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 14.0),
-                        child: Text(
-                          'OR',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w500,
-                            color: Color(0xFF888077),
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        child: Divider(
-                          color: Color(0xFFD6CFC4),
-                          thickness: 1,
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  // Social Login Buttons
-                  _SocialButton(
-                    label: 'Continue with Google',
-                    onPressed: _isLoading ? null : _handleGoogleSignIn,
-                  ),
-                  const SizedBox(height: 12),
-                  _SocialButton(
-                    label: 'Continue with Apple',
-                    onPressed: _isLoading ? null : _handleAppleSignIn,
-                  ),
-
                   // Terms and Privacy Note (Sign up ONLY)
                   if (_mode == AuthMode.signUp) ...[
                     const SizedBox(height: 20),
@@ -791,15 +667,17 @@ class _SecondScreenState extends State<SecondScreen> {
                               text: _mode == AuthMode.signUp
                                   ? 'Already part of EVOQE? '
                                   : 'New to EVOQE? ',
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.w400),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w400,
+                              ),
                             ),
                             TextSpan(
                               text: _mode == AuthMode.signUp
                                   ? 'Log In'
                                   : 'Sign Up',
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.w700),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
                           ],
                         ),
@@ -818,297 +696,6 @@ class _SecondScreenState extends State<SecondScreen> {
   }
 }
 
-class _SocialButton extends StatelessWidget {
-  final String label;
-  final VoidCallback? onPressed;
-
-  const _SocialButton({
-    required this.label,
-    required this.onPressed,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      height: 52,
-      child: OutlinedButton(
-        onPressed: onPressed,
-        style: OutlinedButton.styleFrom(
-          backgroundColor: const Color(0xFFEFECE4),
-          foregroundColor: const Color(0xFF201D19),
-          side: const BorderSide(
-            color: Color(0xFFCDC6BA),
-            width: 1.0,
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10.0),
-          ),
-          elevation: 0,
-        ),
-        child: Text(
-          label,
-          style: const TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF201D19),
-            letterSpacing: 0.1,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _GoogleAccountSheet extends StatelessWidget {
-  const _GoogleAccountSheet();
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(
-        left: 20,
-        right: 20,
-        top: 12,
-        bottom: 24 + MediaQuery.of(context).viewInsets.bottom,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: const Color(0xFFCDC6BA),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          const Text(
-            'Choose an account',
-            style: TextStyle(
-              fontFamily: 'serif',
-              fontSize: 22,
-              fontWeight: FontWeight.w400,
-              color: Color(0xFF201D19),
-            ),
-          ),
-          const SizedBox(height: 4),
-          const Text(
-            'Demo accounts',
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-              letterSpacing: 0.8,
-              color: Color(0xFF888077),
-            ),
-          ),
-          const SizedBox(height: 16),
-          _buildAccountTile(
-            context,
-            name: 'Ananya Sharma',
-            email: 'ananya.sharma@gmail.com',
-            initial: 'A',
-          ),
-          const SizedBox(height: 8),
-          _buildAccountTile(
-            context,
-            name: 'Rohan Mehta',
-            email: 'rohan.mehta@gmail.com',
-            initial: 'R',
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAccountTile(
-    BuildContext context, {
-    required String name,
-    required String email,
-    required String initial,
-  }) {
-    return InkWell(
-      onTap: () {
-        Navigator.pop(context, {'name': name, 'email': email});
-      },
-      borderRadius: BorderRadius.circular(8.0),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: BoxDecoration(
-          color: const Color(0xFFEFECE4),
-          borderRadius: BorderRadius.circular(8.0),
-          border: Border.all(color: const Color(0xFFCDC6BA), width: 1),
-        ),
-        child: Row(
-          children: [
-            CircleAvatar(
-              radius: 18,
-              backgroundColor: const Color(0xFF3E3129),
-              child: Text(
-                initial,
-                style: const TextStyle(
-                  color: Color(0xFFF5F3EC),
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    name,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF201D19),
-                    ),
-                  ),
-                  Text(
-                    email,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFF888077),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _AppleSignInSheet extends StatelessWidget {
-  const _AppleSignInSheet();
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(
-        left: 20,
-        right: 20,
-        top: 12,
-        bottom: 24 + MediaQuery.of(context).viewInsets.bottom,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: const Color(0xFFCDC6BA),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          const Text(
-            'Sign in with Apple',
-            style: TextStyle(
-              fontFamily: 'serif',
-              fontSize: 22,
-              fontWeight: FontWeight.w400,
-              color: Color(0xFF201D19),
-            ),
-          ),
-          const SizedBox(height: 4),
-          const Text(
-            'Demo mode',
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-              letterSpacing: 0.8,
-              color: Color(0xFF888077),
-            ),
-          ),
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            decoration: BoxDecoration(
-              color: const Color(0xFFEFECE4),
-              borderRadius: BorderRadius.circular(8.0),
-              border: Border.all(color: const Color(0xFFCDC6BA), width: 1),
-            ),
-            child: const Row(
-              children: [
-                CircleAvatar(
-                  radius: 18,
-                  backgroundColor: Color(0xFF201D19),
-                  child: Icon(
-                    Icons.apple,
-                    color: Color(0xFFF5F3EC),
-                    size: 20,
-                  ),
-                ),
-                SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Ananya Sharma',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF201D19),
-                        ),
-                      ),
-                      Text(
-                        'ananya.sharma@icloud.com',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFF888077),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
-          SizedBox(
-            width: double.infinity,
-            height: 52,
-            child: ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context, true);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF3E3129),
-                foregroundColor: const Color(0xFFF5F3EC),
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10.0),
-                ),
-              ),
-              child: const Text(
-                'Continue',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.2,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _ForgotPasswordSheet extends StatefulWidget {
   final String initialEmail;
 
@@ -1119,7 +706,7 @@ class _ForgotPasswordSheet extends StatefulWidget {
 }
 
 class _ForgotPasswordSheetState extends State<_ForgotPasswordSheet> {
-  int _step = 1;
+  final int _step = 1;
   late final TextEditingController _emailController;
   final _newPasswordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
@@ -1157,73 +744,25 @@ class _ForgotPasswordSheetState extends State<_ForgotPasswordSheet> {
       return;
     }
 
-    final session = context.read<SessionState>();
-    final exists = await session.accountExists(email);
-    if (!mounted) return;
-    if (!exists) {
-      setState(() {
-        _emailError = 'No account found for this email';
-      });
-      return;
-    }
-
     setState(() {
       _emailError = null;
-      _step = 2;
-    });
-  }
-
-  Future<void> _handleStep2() async {
-    FocusScope.of(context).unfocus();
-    final newPassword = _newPasswordController.text;
-    final confirmPassword = _confirmPasswordController.text;
-
-    bool isValid = true;
-    String? passErr;
-    String? confErr;
-
-    if (newPassword.length < 8 || !newPassword.contains(RegExp(r'\d'))) {
-      passErr = 'Password must be at least 8 characters and include a number';
-      isValid = false;
-    }
-
-    if (confirmPassword != newPassword) {
-      confErr = 'Passwords do not match';
-      isValid = false;
-    }
-
-    if (!isValid) {
-      setState(() {
-        _passwordError = passErr;
-        _confirmError = confErr;
-      });
-      return;
-    }
-
-    setState(() {
       _isLoading = true;
-      _passwordError = null;
-      _confirmError = null;
     });
-
-    final session = context.read<SessionState>();
-    final error = await session.resetPassword(
-      email: _emailController.text.trim(),
-      newPassword: newPassword,
+    final error = await context.read<SessionState>().resetPassword(
+      email: email,
     );
-
     if (!mounted) return;
-
     if (error != null) {
       setState(() {
         _isLoading = false;
-        _passwordError = error;
+        _emailError = error;
       });
-    } else {
-      // TODO(auth): replace with an emailed reset link/code once a backend exists.
-      Navigator.pop(context, true);
+      return;
     }
+    Navigator.pop(context, true);
   }
+
+  Future<void> _handleStep2() => _handleStep1();
 
   @override
   Widget build(BuildContext context) {
@@ -1249,9 +788,9 @@ class _ForgotPasswordSheetState extends State<_ForgotPasswordSheet> {
             ),
           ),
           const SizedBox(height: 16),
-          Text(
-            _step == 1 ? 'Reset your password' : 'Create a new password',
-            style: const TextStyle(
+          const Text(
+            'Reset your password',
+            style: TextStyle(
               fontFamily: 'serif',
               fontSize: 22,
               fontWeight: FontWeight.w400,
@@ -1260,11 +799,8 @@ class _ForgotPasswordSheetState extends State<_ForgotPasswordSheet> {
           ),
           const SizedBox(height: 4),
           const Text(
-            'Demo mode: no email is sent.',
-            style: TextStyle(
-              fontSize: 12,
-              color: Color(0xFF888077),
-            ),
+            'We will email you a secure password reset link.',
+            style: TextStyle(fontSize: 12, color: Color(0xFF888077)),
           ),
           const SizedBox(height: 20),
           if (_step == 1) ...[
@@ -1280,10 +816,7 @@ class _ForgotPasswordSheetState extends State<_ForgotPasswordSheet> {
             TextField(
               controller: _emailController,
               keyboardType: TextInputType.emailAddress,
-              style: const TextStyle(
-                fontSize: 14.5,
-                color: Color(0xFF201D19),
-              ),
+              style: const TextStyle(fontSize: 14.5, color: Color(0xFF201D19)),
               decoration: InputDecoration(
                 hintText: 'Your email',
                 hintStyle: const TextStyle(
@@ -1336,7 +869,7 @@ class _ForgotPasswordSheetState extends State<_ForgotPasswordSheet> {
               width: double.infinity,
               height: 52,
               child: ElevatedButton(
-                onPressed: _handleStep1,
+                onPressed: _isLoading ? null : _handleStep1,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF3E3129),
                   foregroundColor: const Color(0xFFF5F3EC),
@@ -1345,14 +878,16 @@ class _ForgotPasswordSheetState extends State<_ForgotPasswordSheet> {
                     borderRadius: BorderRadius.circular(10.0),
                   ),
                 ),
-                child: const Text(
-                  'Continue',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.2,
-                  ),
-                ),
+                child: _isLoading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          color: Color(0xFFF5F3EC),
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Text('Send reset link'),
               ),
             ),
           ] else ...[
@@ -1368,10 +903,7 @@ class _ForgotPasswordSheetState extends State<_ForgotPasswordSheet> {
             TextField(
               controller: _newPasswordController,
               obscureText: _obscureNew,
-              style: const TextStyle(
-                fontSize: 14.5,
-                color: Color(0xFF201D19),
-              ),
+              style: const TextStyle(fontSize: 14.5, color: Color(0xFF201D19)),
               decoration: InputDecoration(
                 hintText: 'New password',
                 hintStyle: const TextStyle(
@@ -1446,10 +978,7 @@ class _ForgotPasswordSheetState extends State<_ForgotPasswordSheet> {
             TextField(
               controller: _confirmPasswordController,
               obscureText: _obscureConfirm,
-              style: const TextStyle(
-                fontSize: 14.5,
-                color: Color(0xFF201D19),
-              ),
+              style: const TextStyle(fontSize: 14.5, color: Color(0xFF201D19)),
               decoration: InputDecoration(
                 hintText: 'Confirm new password',
                 hintStyle: const TextStyle(

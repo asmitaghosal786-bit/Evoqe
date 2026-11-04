@@ -121,7 +121,7 @@ class _TwentiethScreenState extends State<TwentiethScreen> {
                   imageUrl: _waistcoatImageUrl,
                   title: 'Linen waistcoat',
                   savedChoice: 'Saved choice · Maison Vale',
-                  originalPrice: '₹2,400',
+                  originalPrice: '\$2,400',
                   originalDetails: 'Ivory · M · Original item',
                   keepOriginal: _waistcoatKeepOriginal,
                   onToggleKeepOriginal: (val) {
@@ -130,8 +130,8 @@ class _TwentiethScreenState extends State<TwentiethScreen> {
                     });
                   },
                   suggestionTitle: 'Choose suggestion',
-                  suggestionDetails: 'Atelier Noma · Linen-blend vest\nSimilar, not identical · Save ₹500',
-                  suggestionPrice: '₹1,900',
+                  suggestionDetails: 'Atelier Noma · Linen-blend vest\nSimilar, not identical · Save \$500',
+                  suggestionPrice: '\$1,900',
                 ),
 
                 const SizedBox(height: 16),
@@ -143,7 +143,7 @@ class _TwentiethScreenState extends State<TwentiethScreen> {
                   imageUrl: _trouserImageUrl,
                   title: 'Tailored trouser',
                   savedChoice: 'Saved choice · Maison Vale',
-                  originalPrice: '₹2,200',
+                  originalPrice: '\$2,200',
                   originalDetails: 'Taupe · M · Original item',
                   keepOriginal: _trouserKeepOriginal,
                   onToggleKeepOriginal: (val) {
@@ -152,8 +152,8 @@ class _TwentiethScreenState extends State<TwentiethScreen> {
                     });
                   },
                   suggestionTitle: 'Choose suggestion',
-                  suggestionDetails: 'Rive Studio · Relaxed trouser\nSimilar cut, not identical · Save ₹300',
-                  suggestionPrice: '₹1,900',
+                  suggestionDetails: 'Rive Studio · Relaxed trouser\nSimilar cut, not identical · Save \$300',
+                  suggestionPrice: '\$1,900',
                 ),
 
                 const SizedBox(height: 20),
@@ -174,7 +174,7 @@ class _TwentiethScreenState extends State<TwentiethScreen> {
                       ),
                     ),
                     Text(
-                      '₹$sampleTotal',
+                      '\$$sampleTotal',
                       style: const TextStyle(
                         fontFamily: 'serif',
                         fontSize: 28,
@@ -187,9 +187,9 @@ class _TwentiethScreenState extends State<TwentiethScreen> {
                 const SizedBox(height: 4),
                 Text(
                   _waistcoatKeepOriginal && _trouserKeepOriginal
-                      ? 'Both originals kept · Save ₹800 if you choose both suggestions'
+                      ? 'Both originals kept · Save \$800 if you choose both suggestions'
                       : suggestionsChosen == 2
-                          ? 'Both suggestions chosen · You saved ₹800'
+                          ? 'Both suggestions chosen · You saved \$800'
                           : '1 suggestion chosen · Save more if you choose both',
                   style: const TextStyle(
                     fontSize: 12,

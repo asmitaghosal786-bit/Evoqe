@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'data/local_db/account_store.dart';
-import 'data/local_db/session_store.dart';
+import 'data/local_db/profile_store.dart';
 import 'data/security/crypto_service.dart';
+import 'data/security/secure_auth_storage.dart';
 import 'data/security/secure_media_store.dart';
+import 'screens/password_recovery.dart';
 import 'screens/splash_screen.dart';
+import 'services/app_navigation.dart';
 import 'services/auth_service.dart';
 import 'state/session_state.dart';
 
@@ -16,20 +19,39 @@ class _AppInitData {
   _AppInitData({required this.session, required this.mediaStore});
 }
 
-Future<_AppInitData> _initApp() async {
-  final crypto = await CryptoService.init();
-  final accountStore = await AccountStore.open(crypto);
-  final auth = AuthService(accountStore);
-  await auth.seedDemoAccount();
+bool _supabaseInitialized = false;
 
-  final session = SessionState(auth, SecureSessionStore());
+Future<_AppInitData> _initApp() async {
+  const supabaseUrl = String.fromEnvironment('SUPABASE_URL');
+  const supabaseAnonKey = String.fromEnvironment('SUPABASE_ANON_KEY');
+  if (supabaseUrl.isEmpty || supabaseAnonKey.isEmpty) {
+    throw StateError('SUPABASE_URL and SUPABASE_ANON_KEY must be configured.');
+  }
+  if (!_supabaseInitialized) {
+    await Supabase.initialize(
+      url: supabaseUrl,
+      publishableKey: supabaseAnonKey,
+      authOptions: const FlutterAuthClientOptions(
+        localStorage: SecureAuthStorage(),
+        pkceAsyncStorage: SecureAuthStorage(),
+        detectSessionInUriPredicate: _isSupabaseAuthCallback,
+      ),
+    );
+    _supabaseInitialized = true;
+  }
+
+  final crypto = await CryptoService.init();
+  final profileStore = await ProfileStore.open(crypto);
+  final auth = AuthService(Supabase.instance.client, profileStore);
+
+  final session = SessionState(auth);
   await session.restore();
 
-  return _AppInitData(
-    session: session,
-    mediaStore: SecureMediaStore(crypto),
-  );
+  return _AppInitData(session: session, mediaStore: SecureMediaStore(crypto));
 }
+
+bool _isSupabaseAuthCallback(Uri uri) =>
+    uri.scheme == 'com.example.evoqe' && uri.host == 'auth-callback';
 
 Widget _buildApp(_AppInitData initData) {
   return MultiProvider(
@@ -128,10 +150,7 @@ class _StartupErrorScreenState extends State<_StartupErrorScreen> {
                 const Text(
                   'Something went wrong while loading your data.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Color(0xFF8C8278),
-                  ),
+                  style: TextStyle(fontSize: 14, color: Color(0xFF8C8278)),
                 ),
                 const SizedBox(height: 32),
                 SizedBox(
@@ -183,6 +202,8 @@ class EvoqeApp extends StatelessWidget {
     return MaterialApp(
       title: 'EVOQE',
       debugShowCheckedModeBanner: false,
+      navigatorKey: appNavigatorKey,
+      routes: {'/password-recovery': (_) => const PasswordRecoveryScreen()},
       theme: ThemeData(
         scaffoldBackgroundColor: const Color(0xFFF5F3EC),
         colorScheme: ColorScheme.fromSeed(
